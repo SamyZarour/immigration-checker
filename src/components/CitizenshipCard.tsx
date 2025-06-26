@@ -1,10 +1,27 @@
 import { useRecoilValue } from "recoil";
-import { citizenshipCalculationAtom } from "../store/atoms";
+import { citizenshipCalculationAtom, isCalculatingAtom } from "../store/atoms";
 import { ProgressBar } from "./ProgressBar";
 import { StatsGrid } from "./StatsGrid";
+import { LoadingSpinner } from "./LoadingSpinner";
 
 export function CitizenshipCard() {
   const citizenship = useRecoilValue(citizenshipCalculationAtom);
+  const isCalculating = useRecoilValue(isCalculatingAtom);
+
+  if (isCalculating) {
+    return (
+      <div className="result-card citizenship">
+        <h3>
+          <span className="status-indicator status-safe"></span>
+          🎯 Citizenship Eligibility Date
+        </h3>
+        <div className="loading-overlay">
+          <LoadingSpinner size="medium" />
+          <span className="loading-text">Calculating...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (!citizenship) {
     return (
@@ -20,10 +37,17 @@ export function CitizenshipCard() {
     console.log(citizenship);
   }
 
+  const statsToday = [
+    { number: citizenship.totalDaysToday, label: "Total Days Today" },
+    { number: citizenship.tempDaysToday, label: "Temp Status Days Today" },
+    { number: citizenship.prDaysToday, label: "PR Days Today" },
+  ];
   const stats = [
     { number: citizenship.totalDays, label: "Total Days" },
     { number: citizenship.tempDays, label: "Temp Status Days" },
     { number: citizenship.prDays, label: "PR Days" },
+  ];
+  const statsRemaining = [
     { number: citizenship.remainingDays, label: "Days Remaining" },
   ];
 
@@ -40,7 +64,9 @@ export function CitizenshipCard() {
         🎯 Citizenship Eligibility Date
       </h3>
       <ProgressBar progress={citizenship.progress} status={getStatusClass()} />
+      <StatsGrid stats={statsRemaining} />
       <StatsGrid stats={stats} />
+      <StatsGrid stats={statsToday} />
       {citizenship.eligible ? (
         <p>
           <strong>✅ Eligible for citizenship!</strong>

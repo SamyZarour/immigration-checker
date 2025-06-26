@@ -136,6 +136,18 @@ input[type="text"]:focus {
   background: #c0392b;
 }
 
+.btn:disabled,
+.btn.disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn:disabled:hover,
+.btn.disabled:hover {
+  background: #bdc3c7;
+}
+
 .results-section {
   margin-top: 30px;
 }
@@ -250,6 +262,16 @@ input[type="text"]:focus {
 
 .file-label:hover {
   background: #7f8c8d;
+}
+
+.file-label.disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.file-label.disabled:hover {
+  background: #bdc3c7;
 }
 
 .progress-bar {

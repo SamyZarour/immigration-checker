@@ -59,14 +59,11 @@ export function calculateCitizenship(
 
   let tempDays = 0;
   let prDays = 0;
-  let progress = 0;
   let totalDays = 0;
-
-  let remainingDays = 0;
-  const fiveYearsAgo = addYearsToDate(citizenshipDate, -5);
 
   while (!isCitizenshipDateFound) {
     // If tmpStartDate or prStartDate is before five years ago, use five years ago
+    const fiveYearsAgo = addYearsToDate(citizenshipDate, -5);
     const tmpStartDateLocal =
       new Date(tmpStartDate) > fiveYearsAgo
         ? new Date(tmpStartDate)
@@ -79,21 +76,14 @@ export function calculateCitizenship(
     // If tmpStartDate is before prStartDate, calculate days in Canada for the period between tmpStartDate and prStartDate
     tempDays =
       tmpStartDateLocal < prStartDateLocal
-        ? Math.min(
-            calculateDaysInCanada(
-              tmpStartDateLocal,
-              prStartDateLocal,
-              absences
-            ),
-            365 * 2
-          )
+        ? calculateDaysInCanada(tmpStartDateLocal, prStartDateLocal, absences)
         : 0;
 
     // Calculate days in Canada for the period between prStartDate and citizenshipDate
     prDays = calculateDaysInCanada(prStartDateLocal, citizenshipDate, absences);
 
     // If the sum of days in Canada for the period between tmpStartDate and prStartDate and days in Canada for the period between prStartDate and citizenshipDate is greater than or equal to 1095, set citizenshipDate to the current date
-    totalDays = Math.floor(tempDays / 2) + prDays;
+    totalDays = Math.min(Math.floor(tempDays / 2), 365) + prDays;
     const isToday =
       citizenshipDate.toISOString().split("T")[0] ==
       new Date().toISOString().split("T")[0];
@@ -105,20 +95,20 @@ export function calculateCitizenship(
 
     if (totalDays >= 1095) {
       isCitizenshipDateFound = true;
-      // days between today and citizenshipDate
-      remainingDays = daysBetween(new Date(), citizenshipDate);
-      progress = Math.min(100, (totalDaysToday / 1095) * 100);
     } else {
       citizenshipDate = addDays(citizenshipDate, 1);
     }
   }
 
   return {
-    totalDays: totalDaysToday,
-    tempDays: tempDaysToday,
-    prDays: prDaysToday,
-    remainingDays,
-    progress,
+    totalDays: totalDays,
+    tempDays: tempDays,
+    prDays: prDays,
+    totalDaysToday: totalDaysToday,
+    tempDaysToday: tempDaysToday,
+    prDaysToday: prDaysToday,
+    remainingDays: daysBetween(new Date(), citizenshipDate),
+    progress: Math.min(100, (totalDaysToday / 1095) * 100),
     citizenshipDate,
     eligible: citizenshipDate < new Date(),
   };
@@ -153,7 +143,7 @@ export function calculatePRStatus(
     if (daysInCanada < 730) {
       return {
         status: "danger",
-        lossDate: date,
+        lossDate: dateInFiveYears,
       };
     }
   }

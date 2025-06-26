@@ -16,6 +16,9 @@ export interface CitizenshipCalculation {
   totalDays: number;
   tempDays: number;
   prDays: number;
+  totalDaysToday: number;
+  tempDaysToday: number;
+  prDaysToday: number;
   remainingDays: number;
   progress: number;
   citizenshipDate: Date | null;
@@ -63,4 +66,16 @@ export const prStatusCalculationAtom = atom<PRStatusCalculation | null>({
 export const residencyCalculationAtom = atom<ResidencyCalculation | null>({
   key: "residencyCalculation",
   default: null,
+});
+
+// Loading state atom
+export const isCalculatingAtom = atom<boolean>({
+  key: "isCalculating",
+  default: false,
+});
+
+// Data operation loading state atom
+export const isDataLoadingAtom = atom<boolean>({
+  key: "isDataLoading",
+  default: false,
 });

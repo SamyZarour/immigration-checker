@@ -1,8 +1,25 @@
 import { useRecoilValue } from "recoil";
-import { prStatusCalculationAtom } from "../store/atoms";
+import { prStatusCalculationAtom, isCalculatingAtom } from "../store/atoms";
+import { LoadingSpinner } from "./LoadingSpinner";
 
 export function PRStatusCard() {
   const prStatus = useRecoilValue(prStatusCalculationAtom);
+  const isCalculating = useRecoilValue(isCalculatingAtom);
+
+  if (isCalculating) {
+    return (
+      <div className="result-card pr-status">
+        <h3>
+          <span className="status-indicator status-warning"></span>
+          🏠 PR Status Loss Date
+        </h3>
+        <div className="loading-overlay">
+          <LoadingSpinner size="medium" />
+          <span className="loading-text">Calculating...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (!prStatus) {
     return (
@@ -20,7 +37,10 @@ export function PRStatusCard() {
     if (prStatus.status === "safe") {
       return "✅ PR status is secure";
     } else {
-      return "❌ PR status in danger, deadline is " + prStatus.lossDate;
+      return (
+        "❌ PR status in danger, deadline is " +
+        prStatus.lossDate?.toLocaleDateString()
+      );
     }
   };
 
