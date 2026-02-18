@@ -11,7 +11,43 @@ export function daysBetween(startDate: Date, endDate: Date): number {
   return Math.abs(differenceInDays(startDate, endDate)) + 1;
 }
 
-// Calculate days in Canada for a given period
+// Merge overlapping or contiguous absences into non-overlapping intervals.
+// Per IRCC, contiguous trips (no return to Canada) should be treated as one
+// continuous absence so the boundary day rule applies once per trip.
+export function mergeAbsences(absences: Absence[]): Absence[] {
+  if (absences.length <= 1) return [...absences];
+
+  const sorted = [...absences].sort(
+    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+  );
+
+  const merged: Absence[] = [{ ...sorted[0] }];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const current = sorted[i];
+    const last = merged[merged.length - 1];
+    const lastEnd = new Date(last.endDate);
+    const currentStart = new Date(current.startDate);
+
+    if (currentStart <= addDays(lastEnd, 1)) {
+      const currentEnd = new Date(current.endDate);
+      if (currentEnd > lastEnd) {
+        last.endDate = current.endDate;
+      }
+      last.description = last.description + " + " + current.description;
+    } else {
+      merged.push({ ...current });
+    }
+  }
+
+  return merged;
+}
+
+// Calculate days in Canada for a given period.
+// Per IRCC rules:
+//   - The return day of an absence counts as present (boundary day rule)
+//   - Same-day trips (leave and return same day) are not absences
+//   - Overlapping/contiguous absences are merged first
 export function calculateDaysInCanada(
   startDate: Date,
   endDate: Date,
@@ -19,12 +55,14 @@ export function calculateDaysInCanada(
 ): number {
   let totalDays = daysBetween(startDate, endDate);
 
-  // Subtract absences
-  for (const absence of absences) {
-    const absenceStart = new Date(absence.startDate);
-    const absenceEnd = new Date(absence.endDate);
+  const merged = mergeAbsences(absences);
 
-    // Check if absence overlaps with the period
+  for (const absence of merged) {
+    const absenceStart = new Date(absence.startDate);
+    const absenceEnd = addDays(new Date(absence.endDate), -1);
+
+    if (absenceEnd < absenceStart) continue;
+
     if (absenceStart <= endDate && absenceEnd >= startDate) {
       const overlapStart = new Date(
         Math.max(startDate.getTime(), absenceStart.getTime())
@@ -50,8 +88,9 @@ export function calculateCitizenship(
   tmpStartDate: string,
   absences: Absence[]
 ): CitizenshipCalculation {
+  const today = new Date();
   let isCitizenshipDateFound = false;
-  let citizenshipDate = new Date();
+  let citizenshipDate = new Date(today);
 
   let tempDaysToday = 0;
   let prDaysToday = 0;
@@ -62,7 +101,6 @@ export function calculateCitizenship(
   let totalDays = 0;
 
   while (!isCitizenshipDateFound) {
-    // If tmpStartDate or prStartDate is before five years ago, use five years ago
     const fiveYearsAgo = addYearsToDate(citizenshipDate, -5);
     const tmpStartDateLocal =
       new Date(tmpStartDate) > fiveYearsAgo
@@ -73,20 +111,29 @@ export function calculateCitizenship(
         ? new Date(prStartDate)
         : fiveYearsAgo;
 
-    // If tmpStartDate is before prStartDate, calculate days in Canada for the period between tmpStartDate and prStartDate
+    // BUG 3 fix: temp period ends the day BEFORE PR start (PR start date
+    // belongs to the PR period, not the temp period)
     tempDays =
       tmpStartDateLocal < prStartDateLocal
-        ? calculateDaysInCanada(tmpStartDateLocal, prStartDateLocal, absences)
+        ? calculateDaysInCanada(
+            tmpStartDateLocal,
+            addDays(prStartDateLocal, -1),
+            absences
+          )
         : 0;
 
-    // Calculate days in Canada for the period between prStartDate and citizenshipDate
-    prDays = calculateDaysInCanada(prStartDateLocal, citizenshipDate, absences);
+    // BUG 4 fix: per IRCC, the application date itself does not count toward
+    // physical presence, so the PR period ends the day before citizenshipDate
+    prDays = calculateDaysInCanada(
+      prStartDateLocal,
+      addDays(citizenshipDate, -1),
+      absences
+    );
 
-    // If the sum of days in Canada for the period between tmpStartDate and prStartDate and days in Canada for the period between prStartDate and citizenshipDate is greater than or equal to 1095, set citizenshipDate to the current date
     totalDays = Math.min(Math.floor(tempDays / 2), 365) + prDays;
     const isToday =
-      citizenshipDate.toISOString().split("T")[0] ==
-      new Date().toISOString().split("T")[0];
+      citizenshipDate.toISOString().split("T")[0] ===
+      today.toISOString().split("T")[0];
     if (isToday) {
       tempDaysToday = tempDays;
       prDaysToday = prDays;
@@ -100,17 +147,21 @@ export function calculateCitizenship(
     }
   }
 
+  // BUG 5 fix: use differenceInDays so remainingDays is 0 when eligible today,
+  // and use date-string comparison for eligible so it's not timing-dependent
+  const daysUntilEligible = differenceInDays(citizenshipDate, today);
+
   return {
-    totalDays: totalDays,
-    tempDays: tempDays,
-    prDays: prDays,
-    totalDaysToday: totalDaysToday,
-    tempDaysToday: tempDaysToday,
-    prDaysToday: prDaysToday,
-    remainingDays: daysBetween(new Date(), citizenshipDate),
+    totalDays,
+    tempDays,
+    prDays,
+    totalDaysToday,
+    tempDaysToday,
+    prDaysToday,
+    remainingDays: Math.max(0, daysUntilEligible),
     progress: Math.min(100, (totalDaysToday / 1095) * 100),
     citizenshipDate,
-    eligible: citizenshipDate < new Date(),
+    eligible: daysUntilEligible <= 0,
   };
 }
 

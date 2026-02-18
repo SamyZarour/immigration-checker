@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Cursor
+.cursor/mcp.json
+
+# Test artifacts
+playwright-report/
+test-results/
+coverage/

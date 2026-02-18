@@ -1,0 +1,36 @@
+---
+description: Project-wide coding conventions
+globs: "**/*.{ts,tsx}"
+---
+
+# General Coding Conventions
+
+## TypeScript
+- Use TypeScript strict mode. Never use `any` -- prefer `unknown` with type narrowing.
+- Prefer `const` over `let`. Never use `var`.
+- Use named exports, not default exports.
+- Use early returns and guard clauses to reduce nesting.
+- Define interfaces for all component props and function parameters.
+
+## Code Style
+- Prettier handles all formatting -- do not override or fight Prettier.
+- Use double quotes for strings (project convention).
+- Semicolons are required.
+- 2-space indentation.
+
+## Git
+- All commits must follow Conventional Commits: `feat:`, `fix:`, `chore:`, `refactor:`, `test:`, `docs:`, `style:`, `perf:`, `ci:`.
+- Keep commits small and focused on a single change.
+
+## Dependencies
+- Use `date-fns` for date manipulation (already in use).
+- Use `zod` for all runtime validation and schemas.
+- Use `react-hook-form` with `@hookform/resolvers` for forms.
+
+## File Organization
+- Source code in `src/`.
+- Components in `src/components/` (PascalCase filenames).
+- Hooks in `src/hooks/` (camelCase, prefixed with `use`).
+- Utility functions in `src/utils/`.
+- State management in `src/store/`.
+- Validation schemas in `src/schemas/`.

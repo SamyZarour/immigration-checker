@@ -1,0 +1,125 @@
+name: Cursor Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  review:
+    name: AI Code Review
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Install Cursor CLI
+        run: |
+          curl -fsSL https://cursor.sh/install.sh | bash
+          echo "$HOME/.cursor/bin" >> $GITHUB_PATH
+
+      - name: Configure git
+        run: |
+          git config user.name "Cursor Agent"
+          git config user.email "cursoragent@cursor.com"
+
+      - name: Fetch base branch
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+
+      - name: Run Cursor Code Review
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BLOCKING_REVIEW: "false"
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          REPO="${{ github.repository }}"
+
+          CHANGED_FILES=$(git diff --name-only ${BASE_SHA}..${HEAD_SHA})
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          RULES_CONTEXT=""
+          if [ -d ".cursor/rules" ]; then
+            RULES_CONTENT=""
+            for f in .cursor/rules/*.mdc; do
+              if [ -f "$f" ]; then
+                RULES_CONTENT="${RULES_CONTENT}\n--- $(basename $f) ---\n$(cat $f)"
+              fi
+            done
+            if [ -n "$RULES_CONTENT" ]; then
+              RULES_CONTEXT="
+
+          Project Coding Rules (from .cursor/rules/):
+          ${RULES_CONTENT}
+
+          When reviewing, check for violations of these project coding rules."
+            fi
+          fi
+
+          cursor-agent --force \
+            --model "gpt-4.1" \
+            --output-format=text \
+            --api-key "${CURSOR_API_KEY}" \
+            --print "You are performing an automated code review on a GitHub Pull Request.
+
+          Context:
+          - Repository: ${REPO}
+          - PR Number: ${PR_NUMBER}
+          - Base SHA: ${BASE_SHA}
+          - Head SHA: ${HEAD_SHA}
+          - Blocking Review: ${BLOCKING_REVIEW}
+          ${RULES_CONTEXT}
+
+          Objectives:
+          1) Review the current PR diff and flag only clear, high-severity issues.
+          2) Leave very short inline comments (1-2 sentences) on changed lines only.
+          3) Post a brief summary comment at the end.
+
+          Procedure:
+          - Get existing review comments: gh api repos/${REPO}/pulls/${PR_NUMBER}/comments
+          - Get diff: git diff ${BASE_SHA}..${HEAD_SHA}
+          - Get changed files: git diff --name-only ${BASE_SHA}..${HEAD_SHA}
+          - If a previously reported issue appears fixed, reply: resolved
+          - Analyze ONLY for:
+            - Null/undefined dereferences
+            - Resource leaks
+            - Injection (SQL/XSS)
+            - Concurrency/race conditions
+            - Missing error handling for critical operations
+            - Obvious logic errors
+            - Clear performance anti-patterns
+            - Security vulnerabilities
+            - Violations of project coding rules (if .cursor/rules/ exists)
+          - Avoid duplicates: skip if similar feedback already exists on the same lines.
+
+          Commenting rules:
+          - Max 10 inline comments total; prioritize the most critical issues
+          - One issue per comment; place on the exact changed line
+          - Natural tone, specific and actionable
+          - Use emojis: critical, security, performance, logic, resolved, improvement
+          - Post comments using: gh api repos/${REPO}/pulls/${PR_NUMBER}/comments with body, path, line, and commit_id (${HEAD_SHA})
+          - Post summary using: gh api repos/${REPO}/issues/${PR_NUMBER}/comments with body
+
+          If no issues found, post a single summary comment noting no issues.
+          " 2>&1 || true
+
+      - name: Check for critical issues
+        if: env.BLOCKING_REVIEW == 'true'
+        run: |
+          if [ -f /tmp/critical_issues.txt ]; then
+            CRITICAL=$(grep -o "CRITICAL_ISSUES_FOUND=[^ ]*" /tmp/critical_issues.txt | cut -d= -f2)
+            if [ "${CRITICAL}" = "true" ]; then
+              echo "Critical issues found. Failing workflow."
+              exit 1
+            fi
+          fi

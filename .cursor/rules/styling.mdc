@@ -1,0 +1,21 @@
+---
+description: Formatting and style rules
+globs: "**/*.{ts,tsx,css,json}"
+---
+
+# Styling Conventions
+
+## Formatting
+- Prettier is the single source of truth for formatting.
+- Do not add ESLint rules that conflict with Prettier.
+- Run `pnpm format` to fix formatting issues.
+
+## CSS
+- Use plain CSS files (existing pattern).
+- Prefer CSS custom properties (variables) for theming values.
+- Use semantic class names that describe purpose, not appearance.
+
+## Code Comments
+- Do not add comments that narrate what the code does.
+- Only add comments for non-obvious intent, trade-offs, or constraints.
+- Use JSDoc for public utility function documentation.
