@@ -21,7 +21,7 @@ jobs:
 
       - name: Install Cursor CLI
         run: |
-          curl -fsSL https://cursor.sh/install.sh | bash
+          curl -fsS https://cursor.com/install | bash
           echo "$HOME/.cursor/bin" >> $GITHUB_PATH
 
       - name: Configure git
@@ -66,11 +66,11 @@ jobs:
             fi
           fi
 
-          cursor-agent --force \
-            --model "gpt-4.1" \
-            --output-format=text \
-            --api-key "${CURSOR_API_KEY}" \
-            --print "You are performing an automated code review on a GitHub Pull Request.
+          agent -p -f \
+            --model "claude-4.6-sonnet" \
+            --output-format text \
+            -a "${CURSOR_API_KEY}" \
+            "You are performing an automated code review on a GitHub Pull Request.
 
           Context:
           - Repository: ${REPO}
@@ -111,7 +111,7 @@ jobs:
           - Post summary using: gh api repos/${REPO}/issues/${PR_NUMBER}/comments with body
 
           If no issues found, post a single summary comment noting no issues.
-          " 2>&1 || true
+          "
 
       - name: Check for critical issues
         if: env.BLOCKING_REVIEW == 'true'
