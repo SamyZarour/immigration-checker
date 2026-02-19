@@ -1,12 +1,11 @@
-import { useRecoilValue } from "recoil";
-import { prStatusCalculationAtom, isCalculatingAtom } from "../store/atoms";
+import { useAppSelector } from "../store/hooks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 
 export function PRStatusCard() {
-  const prStatus = useRecoilValue(prStatusCalculationAtom);
-  const isCalculating = useRecoilValue(isCalculatingAtom);
+  const prStatus = useAppSelector((s) => s.immigration.prStatusCalculation);
+  const isCalculating = useAppSelector((s) => s.immigration.isCalculating);
 
   if (isCalculating) {
     return (
@@ -63,7 +62,9 @@ export function PRStatusCard() {
         ) : (
           <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
             PR status in danger — deadline is{" "}
-            {prStatus.lossDate?.toLocaleDateString()}
+            {prStatus.lossDate
+              ? new Date(prStatus.lossDate).toLocaleDateString()
+              : "unknown"}
           </div>
         )}
       </CardContent>

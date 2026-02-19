@@ -1,4 +1,6 @@
-import { RecoilRoot } from "recoil";
+import { Provider } from "react-redux";
+import { ErrorBoundary } from "react-error-boundary";
+import { store } from "./store/store";
 import { DateInputs } from "./components/DateInputs";
 import { DataManager } from "./components/DataManager";
 import { AbsenceForm } from "./components/AbsenceForm";
@@ -8,6 +10,7 @@ import { ResidencyCard } from "./components/ResidencyCard";
 import { AbsencesList } from "./components/AbsencesList";
 import { CalculationEngine } from "./components/CalculationEngine";
 import { ThemeToggle } from "./components/ThemeToggle";
+import { ErrorFallback } from "./components/ErrorFallback";
 import { Separator } from "@/components/ui/separator";
 
 function AppContent() {
@@ -55,9 +58,11 @@ function AppContent() {
 
 function App() {
   return (
-    <RecoilRoot>
-      <AppContent />
-    </RecoilRoot>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <Provider store={store}>
+        <AppContent />
+      </Provider>
+    </ErrorBoundary>
   );
 }
 

@@ -1,10 +1,28 @@
 import { differenceInDays, addDays, startOfYear } from "date-fns";
-import type {
-  Absence,
-  CitizenshipCalculation,
-  PRStatusCalculation,
-  ResidencyCalculation,
-} from "../store/atoms";
+import type { Absence } from "../store/immigrationSlice";
+
+export interface CitizenshipResult {
+  totalDays: number;
+  tempDays: number;
+  prDays: number;
+  totalDaysToday: number;
+  tempDaysToday: number;
+  prDaysToday: number;
+  remainingDays: number;
+  progress: number;
+  citizenshipDate: Date;
+  eligible: boolean;
+}
+
+export interface PRStatusResult {
+  status: "safe" | "warning" | "danger";
+  lossDate: Date | null;
+}
+
+export interface ResidencyResult {
+  status: "safe" | "warning" | "danger";
+  lossDate: number | null;
+}
 
 // Calculate days between two dates
 export function daysBetween(startDate: Date, endDate: Date): number {
@@ -88,7 +106,7 @@ export function calculateCitizenship(
   prStartDate: string,
   tmpStartDate: string,
   absences: Absence[]
-): CitizenshipCalculation {
+): CitizenshipResult {
   const today = new Date();
   let isCitizenshipDateFound = false;
   let citizenshipDate = new Date(today);
@@ -171,7 +189,7 @@ export function calculatePRStatus(
   prStartDate: string,
   citizenshipDate: Date,
   absences: Absence[]
-): PRStatusCalculation {
+): PRStatusResult {
   // Date when I can start losing my PR status
   const fiveYearsAfterPR = addYearsToDate(new Date(prStartDate), 5);
 
@@ -210,7 +228,7 @@ export function calculatePRStatus(
 export function calculateResidencyStatus(
   citizenshipDate: Date,
   absences: Absence[]
-): ResidencyCalculation {
+): ResidencyResult {
   const requiredDays = 183; // 6 months = ~183 days
 
   let yearStart = startOfYear(new Date());

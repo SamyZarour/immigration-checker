@@ -18,7 +18,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm build && pnpm preview",
+    command: process.env.CI ? "pnpm preview" : "pnpm build && pnpm preview",
     url: "http://localhost:4173/immigration-checker/",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRecoilState } from "recoil";
-import { absencesAtom } from "../store/atoms";
+import { useAppDispatch } from "../store/hooks";
+import { addAbsence } from "../store/immigrationSlice";
 import { absenceFormSchema, type AbsenceFormData } from "../schemas/forms";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 export function AbsenceForm() {
-  const [, setAbsences] = useRecoilState(absencesAtom);
+  const dispatch = useAppDispatch();
 
   const {
     register,
@@ -21,13 +21,13 @@ export function AbsenceForm() {
   });
 
   const onSubmit = (data: AbsenceFormData) => {
-    const newAbsence = {
-      startDate: data.startDate,
-      endDate: data.endDate,
-      description: data.description || "",
-    };
-
-    setAbsences((prev) => [...prev, newAbsence]);
+    dispatch(
+      addAbsence({
+        startDate: data.startDate,
+        endDate: data.endDate,
+        description: data.description || "",
+      })
+    );
     reset();
   };
 
@@ -37,7 +37,10 @@ export function AbsenceForm() {
         <CardTitle className="text-base">Add Absence</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form
+          onSubmit={(e) => void handleSubmit(onSubmit)(e)}
+          className="space-y-4"
+        >
           <div className="space-y-2">
             <Label htmlFor="absenceStart">Start Date</Label>
             <Input type="date" id="absenceStart" {...register("startDate")} />

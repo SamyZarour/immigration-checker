@@ -26,6 +26,9 @@ dist-ssr
 # Cursor
 .cursor/mcp.json
 
+# User data
+data.json
+
 # Test artifacts
 playwright-report/
 test-results/

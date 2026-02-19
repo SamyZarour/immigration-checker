@@ -1,54 +1,54 @@
 import { useRef } from "react";
-import { useRecoilState } from "recoil";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
-  prStartDateAtom,
-  tmpStartDateAtom,
-  absencesAtom,
-  isDataLoadingAtom,
-} from "../store/atoms";
+  loadSavedData,
+  setIsDataLoading,
+  type SavedData,
+} from "../store/immigrationSlice";
 import { useFileHandling } from "../hooks/useFileHandling";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, Download } from "lucide-react";
 
 export function DataManager() {
-  const [prStartDate, setPrStartDate] = useRecoilState(prStartDateAtom);
-  const [tmpStartDate, setTempStartDate] = useRecoilState(tmpStartDateAtom);
-  const [absences, setAbsences] = useRecoilState(absencesAtom);
-  const [isDataLoading, setIsDataLoading] = useRecoilState(isDataLoadingAtom);
+  const dispatch = useAppDispatch();
+  const prStartDate = useAppSelector((s) => s.immigration.prStartDate);
+  const tmpStartDate = useAppSelector((s) => s.immigration.tmpStartDate);
+  const absences = useAppSelector((s) => s.immigration.absences);
+  const isDataLoading = useAppSelector((s) => s.immigration.isDataLoading);
   const { exportData, importData } = useFileHandling();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleExport = async () => {
-    setIsDataLoading(true);
+  const handleExport = () => {
+    dispatch(setIsDataLoading(true));
     try {
-      const data = { prStartDate, tmpStartDate, absences };
-      await exportData(data);
+      const data: SavedData = { prStartDate, tmpStartDate, absences };
+      exportData(data);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       alert(`Failed to export data: ${errorMessage}`);
     } finally {
-      setIsDataLoading(false);
+      dispatch(setIsDataLoading(false));
     }
   };
 
-  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setIsDataLoading(true);
-      try {
-        const data = await importData(file);
-        setPrStartDate(data.prStartDate);
-        setTempStartDate(data.tmpStartDate);
-        setAbsences(data.absences);
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Unknown error";
-        alert(`Failed to import data: ${errorMessage}`);
-      } finally {
-        setIsDataLoading(false);
-      }
+      dispatch(setIsDataLoading(true));
+      importData(file)
+        .then((data) => {
+          dispatch(loadSavedData(data));
+        })
+        .catch((error: unknown) => {
+          const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
+          alert(`Failed to import data: ${errorMessage}`);
+        })
+        .finally(() => {
+          dispatch(setIsDataLoading(false));
+        });
     }
   };
 

@@ -1,5 +1,4 @@
-import { useRecoilValue } from "recoil";
-import { citizenshipCalculationAtom, isCalculatingAtom } from "../store/atoms";
+import { useAppSelector } from "../store/hooks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -19,8 +18,10 @@ function StatBlock({ stats }: { stats: { number: number; label: string }[] }) {
 }
 
 export function CitizenshipCard() {
-  const citizenship = useRecoilValue(citizenshipCalculationAtom);
-  const isCalculating = useRecoilValue(isCalculatingAtom);
+  const citizenship = useAppSelector(
+    (s) => s.immigration.citizenshipCalculation
+  );
+  const isCalculating = useAppSelector((s) => s.immigration.isCalculating);
 
   const getStatusVariant = () => {
     if (!citizenship) return "secondary";
@@ -112,6 +113,7 @@ export function CitizenshipCard() {
           </div>
           <Progress
             value={Math.min(citizenship.progress, 100)}
+            aria-label="Citizenship eligibility progress"
             className={getProgressColor()}
           />
         </div>
@@ -126,7 +128,8 @@ export function CitizenshipCard() {
           </div>
         ) : citizenship.citizenshipDate ? (
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300">
-            Estimated date: {citizenship.citizenshipDate.toLocaleDateString()}
+            Estimated date:{" "}
+            {new Date(citizenship.citizenshipDate).toLocaleDateString()}
           </div>
         ) : null}
       </CardContent>

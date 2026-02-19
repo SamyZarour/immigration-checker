@@ -1,12 +1,11 @@
-import { useRecoilValue } from "recoil";
-import { residencyCalculationAtom, isCalculatingAtom } from "../store/atoms";
+import { useAppSelector } from "../store/hooks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 
 export function ResidencyCard() {
-  const residency = useRecoilValue(residencyCalculationAtom);
-  const isCalculating = useRecoilValue(isCalculatingAtom);
+  const residency = useAppSelector((s) => s.immigration.residencyCalculation);
+  const isCalculating = useAppSelector((s) => s.immigration.isCalculating);
 
   if (isCalculating) {
     return (

@@ -1,5 +1,8 @@
 name: Deploy to GitHub Pages
 
+# Triggered by release (builds from the release tag) or manual dispatch.
+# A fresh build is intentional here to ensure the deployed artifact matches
+# the exact release tag, rather than reusing a CI artifact from a prior run.
 on:
   release:
     types: [published]

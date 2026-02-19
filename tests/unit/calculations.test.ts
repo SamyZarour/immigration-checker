@@ -9,7 +9,7 @@ import {
   calculatePRStatus,
   calculateResidencyStatus,
 } from "../../src/utils/calculations";
-import type { Absence } from "../../src/store/atoms";
+import type { Absence } from "../../src/store/immigrationSlice";
 
 // ============================================================================
 // daysBetween
@@ -399,7 +399,7 @@ describe("calculateCitizenship", () => {
 
       expect(result.tempDays).toBe(0);
       expect(result.eligible).toBe(false);
-      expect(result.citizenshipDate!.getTime()).toBeGreaterThan(
+      expect(result.citizenshipDate.getTime()).toBeGreaterThan(
         new Date("2024-12-01").getTime()
       );
     });
@@ -524,7 +524,7 @@ describe("calculateCitizenship", () => {
       vi.setSystemTime(new Date("2024-12-25"));
 
       const result = calculateCitizenship(prStart, prStart, []);
-      const eligDate = result.citizenshipDate!;
+      const eligDate = result.citizenshipDate;
 
       const dayBefore = addDays(eligDate, -1);
       vi.setSystemTime(dayBefore);
@@ -672,7 +672,7 @@ describe("calculateCitizenship", () => {
       const result = calculateCitizenship(prStart, tmpStart, turkishAbsences);
 
       expect(result.eligible).toBe(false);
-      expect(result.citizenshipDate!.getTime()).toBeGreaterThan(
+      expect(result.citizenshipDate.getTime()).toBeGreaterThan(
         new Date("2026-02-17").getTime()
       );
     });
@@ -725,7 +725,7 @@ describe("calculateCitizenship", () => {
       vi.setSystemTime(new Date("2026-02-17"));
       const result = calculateCitizenship(prStart, tmpStart, turkishAbsences);
 
-      const eligDateStr = result.citizenshipDate!.toISOString().split("T")[0];
+      const eligDateStr = result.citizenshipDate.toISOString().split("T")[0];
       expect(eligDateStr > "2026-02-17").toBe(true);
     });
   });

@@ -1,16 +1,13 @@
-import { useRecoilState } from "recoil";
-import { absencesAtom } from "../store/atoms";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { removeAbsence } from "../store/immigrationSlice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Trash2 } from "lucide-react";
 
 export function AbsencesList() {
-  const [absences, setAbsences] = useRecoilState(absencesAtom);
-
-  const removeAbsence = (index: number) => {
-    setAbsences((prev) => prev.filter((_, i) => i !== index));
-  };
+  const dispatch = useAppDispatch();
+  const absences = useAppSelector((s) => s.immigration.absences);
 
   return (
     <Card>
@@ -39,7 +36,7 @@ export function AbsencesList() {
                   <Button
                     variant="ghost"
                     size="icon-xs"
-                    onClick={() => removeAbsence(index)}
+                    onClick={() => dispatch(removeAbsence(index))}
                     className="text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 />
