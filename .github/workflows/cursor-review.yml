@@ -37,7 +37,6 @@ jobs:
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BLOCKING_REVIEW: "false"
         run: |
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
@@ -77,7 +76,6 @@ jobs:
           - PR Number: ${PR_NUMBER}
           - Base SHA: ${BASE_SHA}
           - Head SHA: ${HEAD_SHA}
-          - Blocking Review: ${BLOCKING_REVIEW}
           ${RULES_CONTEXT}
 
           Objectives:
@@ -112,14 +110,3 @@ jobs:
 
           If no issues found, post a single summary comment noting no issues.
           "
-
-      - name: Check for critical issues
-        if: env.BLOCKING_REVIEW == 'true'
-        run: |
-          if [ -f /tmp/critical_issues.txt ]; then
-            CRITICAL=$(grep -o "CRITICAL_ISSUES_FOUND=[^ ]*" /tmp/critical_issues.txt | cut -d= -f2)
-            if [ "${CRITICAL}" = "true" ]; then
-              echo "Critical issues found. Failing workflow."
-              exit 1
-            fi
-          fi

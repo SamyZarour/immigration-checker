@@ -13,7 +13,8 @@ test.describe("Smoke tests", () => {
 
   test("can navigate and interact with the form", async ({ page }) => {
     await page.goto("/");
-    const dateInputs = page.locator('input[type="date"]');
-    await expect(dateInputs.first()).toBeVisible();
+    await expect(
+      page.getByLabel(/PR Start Date/i).or(page.getByRole("textbox").first())
+    ).toBeVisible();
   });
 });

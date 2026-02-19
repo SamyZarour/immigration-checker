@@ -31,10 +31,11 @@ export function mergeAbsences(absences: Absence[]): Absence[] {
 
     if (currentStart <= addDays(lastEnd, 1)) {
       const currentEnd = new Date(current.endDate);
-      if (currentEnd > lastEnd) {
-        last.endDate = current.endDate;
-      }
-      last.description = last.description + " + " + current.description;
+      merged[merged.length - 1] = {
+        ...last,
+        endDate: currentEnd > lastEnd ? current.endDate : last.endDate,
+        description: last.description + " + " + current.description,
+      };
     } else {
       merged.push({ ...current });
     }
