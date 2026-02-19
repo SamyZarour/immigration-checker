@@ -1,0 +1,70 @@
+---
+description: GitHub Actions, CI/CD, and PR review workflow conventions
+globs: ".github/**/*.yml"
+---
+
+# GitHub Actions & CI/CD Conventions
+
+## PR Workflow
+
+When working with pull requests, always check ALL workflow runs -- not just one. The repository has multiple workflows (CI, Cursor Code Review) that all must pass.
+
+### Diagnosing CI Failures
+
+1. List workflow runs for ALL workflows (`ci.yml`, `cursor-review.yml`, `deploy.yml`, `release.yml`), not just one.
+2. For failed runs, get the job logs with `get_job_logs` using the specific `job_id` (not just `run_id`).
+3. Read the full error output -- don't assume the cause from the job name alone.
+
+### Fixing CI Failures (Iterative Flow)
+
+When a CI run fails, follow this loop until all jobs pass:
+
+1. Check the latest PR job runs -- ensure ALL of them pass. Diagnose any errors.
+2. Make the fix locally.
+3. Commit and push the fix.
+4. Wait for the latest PR jobs to run (poll with `get_workflow_run` until `status: completed`).
+5. If any job failed or new review comments were left, repeat from step 1. Otherwise, exit.
+
+### Addressing PR Review Comments
+
+When review comments are left on a PR (by the AI reviewer or humans), address them as part of the fix-commit-push cycle:
+
+1. **Fix the code** to address all review comments.
+2. **Commit and push** the fix.
+3. **Reply and resolve** each addressed comment thread immediately after pushing:
+   - Get numeric comment IDs: `gh api repos/{owner}/{repo}/pulls/{pr}/comments --jq '.[] | "\(.id) \(.path) \(.body[:80])"'`
+   - Reply directly to each thread: `gh api repos/{owner}/{repo}/pulls/{pr}/comments/{comment_id}/replies -f body='Resolved in {sha} — {description}'`
+   - Get thread node IDs: `gh api graphql` with `reviewThreads` query, filtering `isResolved == false`
+   - Resolve each thread: `gh api graphql` with `resolveReviewThread(input: {threadId: "..."})` mutation
+4. **Wait for CI and review** to re-run and verify no new comments appear.
+
+Rules:
+- Never use the MCP `add_comment_to_pending` tool to respond to existing threads -- it creates new standalone comments instead of replies.
+- Always use `gh api .../comments/{id}/replies` for direct thread replies.
+- Always resolve threads after replying -- don't leave them open.
+- Do not create duplicate or orphaned comments. If you accidentally do, delete them with `gh api -X DELETE repos/{owner}/{repo}/pulls/comments/{id}`.
+
+### Cursor Code Review Workflow
+
+- The `cursor-review.yml` workflow uses the Cursor CLI (`agent`) in headless print mode.
+- It requires the `CURSOR_API_KEY` secret configured in GitHub repo settings.
+- On the Free plan, always use `--model auto` (named models are not available).
+- The correct CLI flags are: `agent -p -f --model auto --output-format text --api-key "$CURSOR_API_KEY"`.
+
+## Docker Images
+
+- When using Playwright in CI with a Docker container, the image version **must** match the installed `@playwright/test` version exactly (e.g., `mcr.microsoft.com/playwright:v1.58.2-noble` for `@playwright/test@1.58.2`).
+- After upgrading Playwright locally, always update the Docker image tag in `ci.yml`.
+
+## Workflow Dependencies
+
+- `release.yml` triggers via `workflow_run` after CI success on `main` -- never on direct push.
+- `deploy.yml` triggers on `release: published` events.
+- The CI workflow jobs run in this dependency order: `lint` -> `unit-test` + `build` -> `e2e-test`.
+
+## Secrets & Security
+
+- Never hardcode API keys or tokens in workflow files.
+- Use GitHub Secrets (`${{ secrets.SECRET_NAME }}`) for all credentials.
+- The `GITHUB_TOKEN` is automatically provided by GitHub Actions -- no manual setup needed.
+- `CURSOR_API_KEY` must be manually added as a repository secret.
