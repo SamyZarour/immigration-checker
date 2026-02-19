@@ -38,6 +38,7 @@ export function AbsencesList() {
                     size="icon-xs"
                     onClick={() => dispatch(removeAbsence(index))}
                     className="text-muted-foreground hover:text-destructive"
+                    aria-label={`Remove absence ${absence.description || absence.startDate}`}
                   >
                     <Trash2 />
                   </Button>

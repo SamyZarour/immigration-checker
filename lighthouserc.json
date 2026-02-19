@@ -1,8 +1,8 @@
 {
   "ci": {
     "collect": {
-      "staticDistDir": "./dist",
-      "url": ["http://localhost/immigration-checker/"],
+      "startServerCommand": "npx serve dist -l 9222",
+      "url": ["http://localhost:9222/immigration-checker/"],
       "numberOfRuns": 1
     },
     "assert": {

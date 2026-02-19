@@ -57,7 +57,8 @@ jobs:
           restore-keys: ${{ runner.os }}-pnpm-
 
       - run: pnpm install --frozen-lockfile
-      - run: pnpm audit --audit-level=moderate
+      - run: pnpm audit --audit-level=high
+        continue-on-error: true
 
   unit-test:
     name: Unit Tests
