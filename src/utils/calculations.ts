@@ -1,6 +1,14 @@
 import { differenceInDays, addDays, startOfYear } from "date-fns";
 import type { Absence } from "../store/immigrationSlice";
 
+function parseDate(value: string): Date {
+  const d = new Date(value);
+  if (isNaN(d.getTime())) {
+    throw new RangeError(`Invalid date string: "${value}"`);
+  }
+  return d;
+}
+
 export interface CitizenshipResult {
   totalDays: number;
   tempDays: number;
@@ -36,7 +44,8 @@ export function mergeAbsences(absences: Absence[]): Absence[] {
   if (absences.length <= 1) return [...absences];
 
   const sorted = [...absences].sort(
-    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    (a, b) =>
+      parseDate(a.startDate).getTime() - parseDate(b.startDate).getTime()
   );
 
   const merged: Absence[] = [{ ...sorted[0] }];
@@ -44,11 +53,11 @@ export function mergeAbsences(absences: Absence[]): Absence[] {
   for (let i = 1; i < sorted.length; i++) {
     const current = sorted[i];
     const last = merged[merged.length - 1];
-    const lastEnd = new Date(last.endDate);
-    const currentStart = new Date(current.startDate);
+    const lastEnd = parseDate(last.endDate);
+    const currentStart = parseDate(current.startDate);
 
     if (currentStart <= addDays(lastEnd, 1)) {
-      const currentEnd = new Date(current.endDate);
+      const currentEnd = parseDate(current.endDate);
       merged[merged.length - 1] = {
         ...last,
         endDate: currentEnd > lastEnd ? current.endDate : last.endDate,
@@ -77,8 +86,8 @@ export function calculateDaysInCanada(
   const merged = mergeAbsences(absences);
 
   for (const absence of merged) {
-    const absenceStart = new Date(absence.startDate);
-    const absenceEnd = addDays(new Date(absence.endDate), -1);
+    const absenceStart = parseDate(absence.startDate);
+    const absenceEnd = addDays(parseDate(absence.endDate), -1);
 
     if (absenceEnd < absenceStart) continue;
 
@@ -122,12 +131,12 @@ export function calculateCitizenship(
   while (!isCitizenshipDateFound) {
     const fiveYearsAgo = addYearsToDate(citizenshipDate, -5);
     const tmpStartDateLocal =
-      new Date(tmpStartDate) > fiveYearsAgo
-        ? new Date(tmpStartDate)
+      parseDate(tmpStartDate) > fiveYearsAgo
+        ? parseDate(tmpStartDate)
         : fiveYearsAgo;
     const prStartDateLocal =
-      new Date(prStartDate) > fiveYearsAgo
-        ? new Date(prStartDate)
+      parseDate(prStartDate) > fiveYearsAgo
+        ? parseDate(prStartDate)
         : fiveYearsAgo;
 
     // BUG 3 fix: temp period ends the day BEFORE PR start (PR start date
@@ -191,7 +200,7 @@ export function calculatePRStatus(
   absences: Absence[]
 ): PRStatusResult {
   // Date when I can start losing my PR status
-  const fiveYearsAfterPR = addYearsToDate(new Date(prStartDate), 5);
+  const fiveYearsAfterPR = addYearsToDate(parseDate(prStartDate), 5);
 
   // If I have not yet reached the 5 years since PR, I am safe
   if (citizenshipDate < fiveYearsAfterPR) {
@@ -207,7 +216,7 @@ export function calculatePRStatus(
     citizenshipDate
   );
   for (let i = 0; i < daysBetweenDeadlineAndCitizenship; i++) {
-    const date = addDays(new Date(prStartDate), i);
+    const date = addDays(parseDate(prStartDate), i);
     const dateInFiveYears = addYearsToDate(date, 5);
     const daysInCanada = calculateDaysInCanada(date, dateInFiveYears, absences);
     if (daysInCanada < 730) {

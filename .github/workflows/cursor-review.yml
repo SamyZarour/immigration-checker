@@ -21,7 +21,10 @@ jobs:
 
       - name: Install Cursor CLI
         run: |
-          curl -fsS https://cursor.com/install | bash
+          INSTALLER=$(mktemp)
+          curl -fsS https://cursor.com/install -o "$INSTALLER"
+          bash "$INSTALLER"
+          rm -f "$INSTALLER"
           echo "$HOME/.cursor/bin" >> $GITHUB_PATH
 
       - name: Configure git

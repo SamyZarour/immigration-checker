@@ -5,12 +5,16 @@ import tailwindcss from "@tailwindcss/vite";
 import { viteMcpPlugin } from "vite-plugin-mcp-client-tools";
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react(), tailwindcss(), viteMcpPlugin()],
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    react(),
+    tailwindcss(),
+    ...(mode === "development" ? [viteMcpPlugin()] : []),
+  ],
   base: "/immigration-checker/",
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
-});
+}));

@@ -72,6 +72,10 @@ tests/
 └── fixtures/         # Test data
 ```
 
+## Roadmap & Tech Debt
+
+See [TODO.md](TODO.md) for the prioritized list of improvements covering cleanup, testing gaps, UX, performance, security, and upgrades.
+
 ## Deployment
 
 The app is deployed to GitHub Pages automatically on each release. See [DEPLOYMENT.md](DEPLOYMENT.md) for manual deployment instructions and troubleshooting.

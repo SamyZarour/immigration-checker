@@ -39,7 +39,7 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
-        "/Users/samy/Documents/Work/Personal/immigration-checker"
+        "<absolute-path-to-project>"
       ]
     }
   }
