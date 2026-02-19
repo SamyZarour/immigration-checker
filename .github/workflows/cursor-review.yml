@@ -67,9 +67,9 @@ jobs:
           fi
 
           agent -p -f \
-            --model "claude-4.6-sonnet" \
+            --model auto \
             --output-format text \
-            -a "${CURSOR_API_KEY}" \
+            --api-key "${CURSOR_API_KEY}" \
             "You are performing an automated code review on a GitHub Pull Request.
 
           Context:
