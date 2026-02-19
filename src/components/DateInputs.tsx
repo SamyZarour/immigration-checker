@@ -4,6 +4,9 @@ import { useRecoilState } from "recoil";
 import { useEffect } from "react";
 import { prStartDateAtom, tmpStartDateAtom } from "../store/atoms";
 import { dateFormSchema, type DateFormData } from "../schemas/forms";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export function DateInputs() {
   const [prStartDate, setPrStartDate] = useRecoilState(prStartDateAtom);
@@ -22,7 +25,6 @@ export function DateInputs() {
     },
   });
 
-  // Reset form when Recoil state changes (e.g., from import)
   useEffect(() => {
     reset({
       prStartDate,
@@ -36,39 +38,43 @@ export function DateInputs() {
   };
 
   return (
-    <div className="input-group">
-      <h3>📅 Important Dates</h3>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div>
-          <label htmlFor="prStartDate">PR Start Date:</label>
-          <input
-            type="date"
-            id="prStartDate"
-            {...register("prStartDate")}
-            onChange={(e) => {
-              setPrStartDate(e.target.value);
-            }}
-          />
-          {errors.prStartDate && (
-            <span className="error">{errors.prStartDate.message}</span>
-          )}
-        </div>
+    <Card className="flex-1 min-w-[280px]">
+      <CardHeader>
+        <CardTitle className="text-base">Important Dates</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="prStartDate">PR Start Date</Label>
+            <Input
+              type="date"
+              id="prStartDate"
+              {...register("prStartDate")}
+              onChange={(e) => setPrStartDate(e.target.value)}
+            />
+            {errors.prStartDate && (
+              <p className="text-sm text-destructive">
+                {errors.prStartDate.message}
+              </p>
+            )}
+          </div>
 
-        <div>
-          <label htmlFor="tmpStartDate">Temporary Status Start Date:</label>
-          <input
-            type="date"
-            id="tmpStartDate"
-            {...register("tmpStartDate")}
-            onChange={(e) => {
-              setTempStartDate(e.target.value);
-            }}
-          />
-          {errors.tmpStartDate && (
-            <span className="error">{errors.tmpStartDate.message}</span>
-          )}
-        </div>
-      </form>
-    </div>
+          <div className="space-y-2">
+            <Label htmlFor="tmpStartDate">Temporary Status Start Date</Label>
+            <Input
+              type="date"
+              id="tmpStartDate"
+              {...register("tmpStartDate")}
+              onChange={(e) => setTempStartDate(e.target.value)}
+            />
+            {errors.tmpStartDate && (
+              <p className="text-sm text-destructive">
+                {errors.tmpStartDate.message}
+              </p>
+            )}
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

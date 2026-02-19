@@ -1,5 +1,5 @@
 ---
-description: Formatting and style rules
+description: Formatting, styling, and UI component conventions
 globs: "**/*.{ts,tsx,css,json}"
 ---
 
@@ -10,10 +10,45 @@ globs: "**/*.{ts,tsx,css,json}"
 - Do not add ESLint rules that conflict with Prettier.
 - Run `pnpm format` to fix formatting issues.
 
-## CSS
-- Use plain CSS files (existing pattern).
-- Prefer CSS custom properties (variables) for theming values.
-- Use semantic class names that describe purpose, not appearance.
+## UI Component System
+- Use **shadcn/ui** components as the base layer for all UI elements.
+- Never create custom equivalents of existing shadcn components (Card, Button, Input, Badge, Progress, Separator, Label, etc.).
+- Install new shadcn components with `pnpm dlx shadcn@latest add <component>`.
+- shadcn components live in `src/components/ui/` and should not be modified unless extending a variant.
+
+## Styling with Tailwind CSS
+- Use **Tailwind CSS utility classes** for all styling — do not create custom CSS files.
+- The only CSS file is `src/index.css`, which contains Tailwind directives and shadcn CSS variables.
+- Use the `cn()` utility from `@/lib/utils` for conditional class merging (never string concatenation).
+- Prefer shadcn design tokens (CSS variables like `--primary`, `--destructive`, `--muted`) over hardcoded color values.
+- Use semantic Tailwind classes for status colors with dark mode variants:
+  - Safe: `text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-300 dark:bg-emerald-950 dark:border-emerald-800`
+  - Warning: `text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-950 dark:border-amber-800`
+  - Danger: `text-red-700 bg-red-50 border-red-200 dark:text-red-300 dark:bg-red-950 dark:border-red-800`
+  - Info: `text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-300 dark:bg-blue-950 dark:border-blue-800`
+
+## Dark Mode
+- Dark mode uses the `dark` class on `<html>`, toggled via `useTheme()` hook from `@/hooks/useTheme`.
+- The `ThemeToggle` component cycles through light / dark / system modes, persisted in `localStorage`.
+- Always add `dark:` variants when using hardcoded Tailwind color utilities (e.g., `bg-emerald-50 dark:bg-emerald-950`).
+- shadcn design tokens (`bg-background`, `text-foreground`, `bg-card`, `text-muted-foreground`, etc.) adapt automatically — prefer these over hardcoded colors when possible.
+
+## Component Composition
+- Follow shadcn's composition pattern: `Card` > `CardHeader` > `CardTitle` > `CardContent`.
+- Use `Badge` for status indicators instead of colored dots or custom status elements.
+- Use `Button` variants (`default`, `outline`, `destructive`, `secondary`, `ghost`) instead of custom button classes.
+- Use `Input` + `Label` for form fields.
+- Use `Separator` for visual dividers.
+- Use `Progress` for progress bars.
+- Use Lucide icons (`lucide-react`) for iconography — do not use emoji in headings.
+
+## Responsive Design
+- Use mobile-first responsive design with Tailwind breakpoint prefixes (`sm:`, `md:`, `lg:`).
+- Use `max-w-6xl mx-auto` for content containment.
+- Use CSS Grid (`grid`) and Flexbox (`flex`) via Tailwind for layouts.
+
+## Import Aliases
+- Use the `@/` path alias for imports from `src/` (e.g., `@/components/ui/card`, `@/lib/utils`).
 
 ## Code Comments
 - Do not add comments that narrate what the code does.
