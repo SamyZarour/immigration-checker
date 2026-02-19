@@ -1,7 +1,7 @@
 {
   "ci": {
     "collect": {
-      "startServerCommand": "npx serve dist -l 9222",
+      "startServerCommand": "npx serve lighthouse-serve -l 9222",
       "url": ["http://localhost:9222/immigration-checker/"],
       "numberOfRuns": 1
     },
