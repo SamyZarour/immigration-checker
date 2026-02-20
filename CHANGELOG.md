@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/SamyZarour/immigration-checker/compare/v1.0.0...v1.0.1) (2026-02-20)
+
+
+### Bug Fixes
+
+* update eslint config for react-hooks v7 flat config format ([accb0c0](https://github.com/SamyZarour/immigration-checker/commit/accb0c03b5643e56c698ba83565b1f14e3259f98))
+
 # 1.0.0 (2026-02-20)
 
 
