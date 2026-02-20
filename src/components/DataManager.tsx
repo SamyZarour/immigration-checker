@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   loadSavedData,
@@ -27,7 +28,7 @@ export function DataManager() {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
-      alert(`Failed to export data: ${errorMessage}`);
+      toast.error(`Failed to export data: ${errorMessage}`);
     } finally {
       dispatch(setIsDataLoading(false));
     }
@@ -44,7 +45,7 @@ export function DataManager() {
         .catch((error: unknown) => {
           const errorMessage =
             error instanceof Error ? error.message : "Unknown error";
-          alert(`Failed to import data: ${errorMessage}`);
+          toast.error(`Failed to import data: ${errorMessage}`);
         })
         .finally(() => {
           dispatch(setIsDataLoading(false));

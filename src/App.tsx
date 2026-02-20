@@ -1,5 +1,6 @@
 import { Provider } from "react-redux";
 import { ErrorBoundary } from "react-error-boundary";
+import { Toaster } from "sonner";
 import { store } from "./store/store";
 import { DateInputs } from "./components/DateInputs";
 import { DataManager } from "./components/DataManager";
@@ -61,6 +62,7 @@ function App() {
     <ErrorBoundary FallbackComponent={ErrorFallback}>
       <Provider store={store}>
         <AppContent />
+        <Toaster richColors closeButton position="bottom-right" />
       </Provider>
     </ErrorBoundary>
   );
