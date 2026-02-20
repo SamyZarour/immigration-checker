@@ -1,6 +1,6 @@
 ---
-description: Project-wide coding conventions
-globs: "**/*.{ts,tsx}"
+description: Project-wide coding conventions and agent behavior
+alwaysApply: true
 ---
 
 # General Coding Conventions
@@ -18,9 +18,32 @@ globs: "**/*.{ts,tsx}"
 - Semicolons are required.
 - 2-space indentation.
 
+## Agent Behavior
+- Be direct and honest. If an idea is bad, say so and explain why.
+- Never modify config files (ESLint, TypeScript, Vite, CI, Prettier, etc.) without asking first.
+- When unsure about intent, scope, or approach — stop and ask. Do not assume.
+
 ## Git
 - All commits must follow Conventional Commits: `feat:`, `fix:`, `chore:`, `refactor:`, `test:`, `docs:`, `style:`, `perf:`, `ci:`.
 - Keep commits small and focused on a single change.
+- Always run `pnpm test:coverage` and `pnpm lint` before committing. Do not skip this.
+
+## Pull Requests
+- When opening or reviewing a PR, wait for all CI jobs to pass before moving on.
+- When creating a PR, fill out the PR template completely: check the relevant type, describe what changed and why, and mark testing checkboxes accurately.
+- When addressing review comments: fix the issue, reply to the comment, and resolve/close it.
+- When merging a PR tied to a ClickUp task, close the task in ClickUp.
+
+## Task Workflow
+
+1. **Pick task** — Fetch top-priority unstarted task from ClickUp
+2. **Create branch** — `git checkout -b <type>/<short-description>` from latest `main`
+3. **Open PR** — Push branch, create PR using the repo's PR template
+4. **Implement** — Make changes following project conventions
+5. **Validate** — Run `pnpm lint`, `pnpm format:check`, and `pnpm test:coverage`; ensure full coverage on changed files
+6. **Commit & push** — Use Conventional Commits
+7. **Wait for CI & review** — Monitor `gh pr checks` and review comments
+8. **Iterate** — If CI or review fails, fix and go back to step 4
 
 ## Dependencies
 - Use `date-fns` for date manipulation (already in use).
