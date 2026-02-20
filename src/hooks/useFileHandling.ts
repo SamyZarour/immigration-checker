@@ -1,5 +1,7 @@
 import { useCallback } from "react";
+import { ZodError } from "zod";
 import type { SavedData } from "../store/immigrationSlice";
+import { savedDataSchema } from "../schemas/forms";
 
 export function useFileHandling() {
   const exportData = useCallback((data: SavedData) => {
@@ -19,10 +21,18 @@ export function useFileHandling() {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
-          const data = JSON.parse(e.target?.result as string) as SavedData;
+          const parsed: unknown = JSON.parse(e.target?.result as string);
+          const data = savedDataSchema.parse(parsed);
           resolve(data);
-        } catch {
-          reject(new Error("Invalid JSON file"));
+        } catch (error) {
+          if (error instanceof ZodError) {
+            const details = error.issues
+              .map((i) => `${i.path.join(".")}: ${i.message}`)
+              .join("; ");
+            reject(new Error(`Invalid data format: ${details}`));
+          } else {
+            reject(new Error("Invalid JSON file"));
+          }
         }
       };
       reader.onerror = () => reject(new Error("Failed to read file"));
