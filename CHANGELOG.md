@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/SamyZarour/immigration-checker/compare/v1.0.1...v1.0.2) (2026-02-20)
+
+
+### Bug Fixes
+
+* add regression tests for setAbsences reducer flat array behavior ([9c30108](https://github.com/SamyZarour/immigration-checker/commit/9c301088afc7f401a6de86cfd563899551a19154))
+
 ## [1.0.1](https://github.com/SamyZarour/immigration-checker/compare/v1.0.0...v1.0.1) (2026-02-20)
 
 
