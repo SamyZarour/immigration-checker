@@ -136,6 +136,53 @@ describe("immigrationSlice", () => {
       expect(absences).toHaveLength(1);
       expect(absences[0].description).toBe("New");
     });
+
+    it("setAbsences produces a flat array, not nested", () => {
+      const store = createTestStore();
+      const payload = [
+        {
+          startDate: "2024-01-01",
+          endDate: "2024-01-10",
+          description: "A",
+        },
+        {
+          startDate: "2024-02-01",
+          endDate: "2024-02-10",
+          description: "B",
+        },
+        {
+          startDate: "2024-03-01",
+          endDate: "2024-03-10",
+          description: "C",
+        },
+      ];
+
+      store.dispatch(setAbsences(payload));
+
+      const absences = store.getState().immigration.absences;
+      expect(absences).toHaveLength(3);
+      expect(absences).toEqual(payload);
+      absences.forEach((absence) => {
+        expect(absence).toHaveProperty("startDate");
+        expect(absence).toHaveProperty("endDate");
+        expect(absence).toHaveProperty("description");
+      });
+    });
+
+    it("setAbsences with empty array clears all absences", () => {
+      const store = createTestStore();
+      store.dispatch(
+        addAbsence({
+          startDate: "2024-01-01",
+          endDate: "2024-01-10",
+          description: "Existing",
+        })
+      );
+
+      store.dispatch(setAbsences([]));
+
+      expect(store.getState().immigration.absences).toEqual([]);
+    });
   });
 
   describe("calculation actions", () => {
