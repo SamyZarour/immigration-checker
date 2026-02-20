@@ -1,17 +1,81 @@
 import { differenceInDays, addDays, startOfYear } from "date-fns";
-import type {
-  Absence,
-  CitizenshipCalculation,
-  PRStatusCalculation,
-  ResidencyCalculation,
-} from "../store/atoms";
+import type { Absence } from "../store/immigrationSlice";
+
+function parseDate(value: string): Date {
+  const d = new Date(value);
+  if (isNaN(d.getTime())) {
+    throw new RangeError(`Invalid date string: "${value}"`);
+  }
+  return d;
+}
+
+export interface CitizenshipResult {
+  totalDays: number;
+  tempDays: number;
+  prDays: number;
+  totalDaysToday: number;
+  tempDaysToday: number;
+  prDaysToday: number;
+  remainingDays: number;
+  progress: number;
+  citizenshipDate: Date;
+  eligible: boolean;
+}
+
+export interface PRStatusResult {
+  status: "safe" | "warning" | "danger";
+  lossDate: Date | null;
+}
+
+export interface ResidencyResult {
+  status: "safe" | "warning" | "danger";
+  lossDate: number | null;
+}
 
 // Calculate days between two dates
 export function daysBetween(startDate: Date, endDate: Date): number {
   return Math.abs(differenceInDays(startDate, endDate)) + 1;
 }
 
-// Calculate days in Canada for a given period
+// Merge overlapping or contiguous absences into non-overlapping intervals.
+// Per IRCC, contiguous trips (no return to Canada) should be treated as one
+// continuous absence so the boundary day rule applies once per trip.
+export function mergeAbsences(absences: Absence[]): Absence[] {
+  if (absences.length <= 1) return [...absences];
+
+  const sorted = [...absences].sort(
+    (a, b) =>
+      parseDate(a.startDate).getTime() - parseDate(b.startDate).getTime()
+  );
+
+  const merged: Absence[] = [{ ...sorted[0] }];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const current = sorted[i];
+    const last = merged[merged.length - 1];
+    const lastEnd = parseDate(last.endDate);
+    const currentStart = parseDate(current.startDate);
+
+    if (currentStart <= addDays(lastEnd, 1)) {
+      const currentEnd = parseDate(current.endDate);
+      merged[merged.length - 1] = {
+        ...last,
+        endDate: currentEnd > lastEnd ? current.endDate : last.endDate,
+        description: last.description + " + " + current.description,
+      };
+    } else {
+      merged.push({ ...current });
+    }
+  }
+
+  return merged;
+}
+
+// Calculate days in Canada for a given period.
+// Per IRCC rules:
+//   - The return day of an absence counts as present (boundary day rule)
+//   - Same-day trips (leave and return same day) are not absences
+//   - Overlapping/contiguous absences are merged first
 export function calculateDaysInCanada(
   startDate: Date,
   endDate: Date,
@@ -19,12 +83,14 @@ export function calculateDaysInCanada(
 ): number {
   let totalDays = daysBetween(startDate, endDate);
 
-  // Subtract absences
-  for (const absence of absences) {
-    const absenceStart = new Date(absence.startDate);
-    const absenceEnd = new Date(absence.endDate);
+  const merged = mergeAbsences(absences);
 
-    // Check if absence overlaps with the period
+  for (const absence of merged) {
+    const absenceStart = parseDate(absence.startDate);
+    const absenceEnd = addDays(parseDate(absence.endDate), -1);
+
+    if (absenceEnd < absenceStart) continue;
+
     if (absenceStart <= endDate && absenceEnd >= startDate) {
       const overlapStart = new Date(
         Math.max(startDate.getTime(), absenceStart.getTime())
@@ -49,9 +115,10 @@ export function calculateCitizenship(
   prStartDate: string,
   tmpStartDate: string,
   absences: Absence[]
-): CitizenshipCalculation {
+): CitizenshipResult {
+  const today = new Date();
   let isCitizenshipDateFound = false;
-  let citizenshipDate = new Date();
+  let citizenshipDate = new Date(today);
 
   let tempDaysToday = 0;
   let prDaysToday = 0;
@@ -62,31 +129,39 @@ export function calculateCitizenship(
   let totalDays = 0;
 
   while (!isCitizenshipDateFound) {
-    // If tmpStartDate or prStartDate is before five years ago, use five years ago
     const fiveYearsAgo = addYearsToDate(citizenshipDate, -5);
     const tmpStartDateLocal =
-      new Date(tmpStartDate) > fiveYearsAgo
-        ? new Date(tmpStartDate)
+      parseDate(tmpStartDate) > fiveYearsAgo
+        ? parseDate(tmpStartDate)
         : fiveYearsAgo;
     const prStartDateLocal =
-      new Date(prStartDate) > fiveYearsAgo
-        ? new Date(prStartDate)
+      parseDate(prStartDate) > fiveYearsAgo
+        ? parseDate(prStartDate)
         : fiveYearsAgo;
 
-    // If tmpStartDate is before prStartDate, calculate days in Canada for the period between tmpStartDate and prStartDate
+    // BUG 3 fix: temp period ends the day BEFORE PR start (PR start date
+    // belongs to the PR period, not the temp period)
     tempDays =
       tmpStartDateLocal < prStartDateLocal
-        ? calculateDaysInCanada(tmpStartDateLocal, prStartDateLocal, absences)
+        ? calculateDaysInCanada(
+            tmpStartDateLocal,
+            addDays(prStartDateLocal, -1),
+            absences
+          )
         : 0;
 
-    // Calculate days in Canada for the period between prStartDate and citizenshipDate
-    prDays = calculateDaysInCanada(prStartDateLocal, citizenshipDate, absences);
+    // BUG 4 fix: per IRCC, the application date itself does not count toward
+    // physical presence, so the PR period ends the day before citizenshipDate
+    prDays = calculateDaysInCanada(
+      prStartDateLocal,
+      addDays(citizenshipDate, -1),
+      absences
+    );
 
-    // If the sum of days in Canada for the period between tmpStartDate and prStartDate and days in Canada for the period between prStartDate and citizenshipDate is greater than or equal to 1095, set citizenshipDate to the current date
     totalDays = Math.min(Math.floor(tempDays / 2), 365) + prDays;
     const isToday =
-      citizenshipDate.toISOString().split("T")[0] ==
-      new Date().toISOString().split("T")[0];
+      citizenshipDate.toISOString().split("T")[0] ===
+      today.toISOString().split("T")[0];
     if (isToday) {
       tempDaysToday = tempDays;
       prDaysToday = prDays;
@@ -100,17 +175,21 @@ export function calculateCitizenship(
     }
   }
 
+  // BUG 5 fix: use differenceInDays so remainingDays is 0 when eligible today,
+  // and use date-string comparison for eligible so it's not timing-dependent
+  const daysUntilEligible = differenceInDays(citizenshipDate, today);
+
   return {
-    totalDays: totalDays,
-    tempDays: tempDays,
-    prDays: prDays,
-    totalDaysToday: totalDaysToday,
-    tempDaysToday: tempDaysToday,
-    prDaysToday: prDaysToday,
-    remainingDays: daysBetween(new Date(), citizenshipDate),
+    totalDays,
+    tempDays,
+    prDays,
+    totalDaysToday,
+    tempDaysToday,
+    prDaysToday,
+    remainingDays: Math.max(0, daysUntilEligible),
     progress: Math.min(100, (totalDaysToday / 1095) * 100),
     citizenshipDate,
-    eligible: citizenshipDate < new Date(),
+    eligible: daysUntilEligible <= 0,
   };
 }
 
@@ -119,9 +198,9 @@ export function calculatePRStatus(
   prStartDate: string,
   citizenshipDate: Date,
   absences: Absence[]
-): PRStatusCalculation {
+): PRStatusResult {
   // Date when I can start losing my PR status
-  const fiveYearsAfterPR = addYearsToDate(new Date(prStartDate), 5);
+  const fiveYearsAfterPR = addYearsToDate(parseDate(prStartDate), 5);
 
   // If I have not yet reached the 5 years since PR, I am safe
   if (citizenshipDate < fiveYearsAfterPR) {
@@ -137,7 +216,7 @@ export function calculatePRStatus(
     citizenshipDate
   );
   for (let i = 0; i < daysBetweenDeadlineAndCitizenship; i++) {
-    const date = addDays(new Date(prStartDate), i);
+    const date = addDays(parseDate(prStartDate), i);
     const dateInFiveYears = addYearsToDate(date, 5);
     const daysInCanada = calculateDaysInCanada(date, dateInFiveYears, absences);
     if (daysInCanada < 730) {
@@ -158,7 +237,7 @@ export function calculatePRStatus(
 export function calculateResidencyStatus(
   citizenshipDate: Date,
   absences: Absence[]
-): ResidencyCalculation {
+): ResidencyResult {
   const requiredDays = 183; // 6 months = ~183 days
 
   let yearStart = startOfYear(new Date());

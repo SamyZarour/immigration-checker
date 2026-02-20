@@ -1,0 +1,27 @@
+---
+description: React and component conventions
+globs: "src/**/*.{tsx,ts}"
+---
+
+# React Conventions
+
+## Components
+- Use functional components only. No class components.
+- Define prop types with TypeScript interfaces (not `type` aliases for props).
+- Keep components focused on a single responsibility.
+- Extract reusable logic into custom hooks in `src/hooks/`.
+
+## State Management
+- Use Recoil atoms for global state (existing pattern in `src/store/atoms.ts`).
+- Use `useState` for local UI state.
+- Use `react-hook-form` with Zod resolvers for form state.
+
+## Patterns
+- Prefer composition over prop drilling.
+- Handle loading and error states explicitly.
+- Use early returns for conditional rendering.
+
+## Performance
+- Wrap expensive computations in `useMemo`.
+- Wrap callback functions in `useCallback` when passed as props.
+- Avoid creating objects or arrays inline in JSX props.

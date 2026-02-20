@@ -1,0 +1,28 @@
+---
+description: Testing conventions and patterns
+globs: "tests/**/*.{ts,tsx}"
+---
+
+# Testing Conventions
+
+## Structure
+- Unit tests: `tests/unit/` using Vitest.
+- E2E tests: `tests/e2e/` using Playwright.
+- Test fixtures: `tests/fixtures/` (JSON data files).
+
+## Unit Tests (Vitest)
+- All pure utility functions must have unit tests.
+- Use `describe` blocks to group related tests.
+- Use descriptive test names that explain the expected behavior.
+- Test edge cases: empty inputs, boundary values, error conditions.
+
+## E2E Tests (Playwright)
+- Use accessibility-first selectors: `getByRole`, `getByText`, `getByLabel`.
+- Avoid CSS selectors or test IDs unless no accessible alternative exists.
+- Each test should be independent -- do not rely on state from other tests.
+- Use test fixtures in `tests/fixtures/` for seed data.
+
+## General
+- Do not mock what you can test directly.
+- Keep tests fast -- avoid unnecessary waits or sleeps.
+- Tests should be deterministic -- no reliance on current date/time without mocking.

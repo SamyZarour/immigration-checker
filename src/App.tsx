@@ -1,4 +1,6 @@
-import { RecoilRoot } from "recoil";
+import { Provider } from "react-redux";
+import { ErrorBoundary } from "react-error-boundary";
+import { store } from "./store/store";
 import { DateInputs } from "./components/DateInputs";
 import { DataManager } from "./components/DataManager";
 import { AbsenceForm } from "./components/AbsenceForm";
@@ -7,35 +9,47 @@ import { PRStatusCard } from "./components/PRStatusCard";
 import { ResidencyCard } from "./components/ResidencyCard";
 import { AbsencesList } from "./components/AbsencesList";
 import { CalculationEngine } from "./components/CalculationEngine";
-import "./App.css";
+import { ThemeToggle } from "./components/ThemeToggle";
+import { ErrorFallback } from "./components/ErrorFallback";
+import { Separator } from "@/components/ui/separator";
 
 function AppContent() {
   return (
-    <div className="container">
-      <div className="header">
-        <h1>🇨🇦 Canadian PR Planner</h1>
-        <p>
-          Track your Permanent Residency status, Citizenship eligibility, and
-          Residency requirements
-        </p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="mx-auto flex max-w-6xl items-start justify-between px-4 py-6 sm:px-6 lg:px-8">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Canadian PR Planner
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Track your Permanent Residency status, Citizenship eligibility,
+              and Residency requirements
+            </p>
+          </div>
+          <ThemeToggle />
+        </div>
+      </header>
 
-      <div className="main-content">
-        <div className="results-section">
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="grid gap-6 lg:grid-cols-3">
           <CitizenshipCard />
           <PRStatusCard />
           <ResidencyCard />
         </div>
-        <div className="input-section">
+
+        <Separator className="my-8" />
+
+        <div className="flex flex-wrap gap-6">
           <DateInputs />
           <DataManager />
           <AbsenceForm />
         </div>
 
-        <div className="results-section">
-          <AbsencesList />
-        </div>
-      </div>
+        <Separator className="my-8" />
+
+        <AbsencesList />
+      </main>
 
       <CalculationEngine />
     </div>
@@ -44,10 +58,12 @@ function AppContent() {
 
 function App() {
   return (
-    <RecoilRoot>
-      <AppContent />
-    </RecoilRoot>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <Provider store={store}>
+        <AppContent />
+      </Provider>
+    </ErrorBoundary>
   );
 }
 
-export default App;
+export { App };

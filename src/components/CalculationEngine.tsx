@@ -1,14 +1,11 @@
 import { useEffect } from "react";
-import { useRecoilValue, useSetRecoilState } from "recoil";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
-  prStartDateAtom,
-  tmpStartDateAtom,
-  absencesAtom,
-  citizenshipCalculationAtom,
-  prStatusCalculationAtom,
-  residencyCalculationAtom,
-  isCalculatingAtom,
-} from "../store/atoms";
+  setCitizenshipCalculation,
+  setPrStatusCalculation,
+  setResidencyCalculation,
+  setIsCalculating,
+} from "../store/immigrationSlice";
 import {
   calculateCitizenship,
   calculatePRStatus,
@@ -16,60 +13,51 @@ import {
 } from "../utils/calculations";
 
 export function CalculationEngine() {
-  const prStartDate = useRecoilValue(prStartDateAtom);
-  const tmpStartDate = useRecoilValue(tmpStartDateAtom);
-  const absences = useRecoilValue(absencesAtom);
-
-  const setCitizenshipCalculation = useSetRecoilState(
-    citizenshipCalculationAtom
-  );
-  const setPrStatusCalculation = useSetRecoilState(prStatusCalculationAtom);
-  const setResidencyCalculation = useSetRecoilState(residencyCalculationAtom);
-  const setIsCalculating = useSetRecoilState(isCalculatingAtom);
+  const dispatch = useAppDispatch();
+  const prStartDate = useAppSelector((s) => s.immigration.prStartDate);
+  const tmpStartDate = useAppSelector((s) => s.immigration.tmpStartDate);
+  const absences = useAppSelector((s) => s.immigration.absences);
 
   useEffect(() => {
     const performCalculations = async () => {
-      setIsCalculating(true);
+      dispatch(setIsCalculating(true));
 
-      // Add a small delay to make loading visible (optional)
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Calculate citizenship eligibility
       const citizenship = calculateCitizenship(
         prStartDate,
         tmpStartDate,
         absences
       );
-      setCitizenshipCalculation(citizenship);
+      dispatch(
+        setCitizenshipCalculation({
+          ...citizenship,
+          citizenshipDate:
+            citizenship.citizenshipDate?.toISOString().split("T")[0] ?? null,
+        })
+      );
 
-      // Calculate PR status
+      const citizenshipDate = citizenship.citizenshipDate ?? new Date();
       const prStatus = calculatePRStatus(
         prStartDate,
-        citizenship.citizenshipDate || new Date(),
+        citizenshipDate,
         absences
       );
-      setPrStatusCalculation(prStatus);
-
-      // Calculate residency status
-      const residency = calculateResidencyStatus(
-        citizenship.citizenshipDate || new Date(),
-        absences
+      dispatch(
+        setPrStatusCalculation({
+          ...prStatus,
+          lossDate: prStatus.lossDate?.toISOString().split("T")[0] ?? null,
+        })
       );
-      setResidencyCalculation(residency);
 
-      setIsCalculating(false);
+      const residency = calculateResidencyStatus(citizenshipDate, absences);
+      dispatch(setResidencyCalculation(residency));
+
+      dispatch(setIsCalculating(false));
     };
 
-    performCalculations();
-  }, [
-    prStartDate,
-    tmpStartDate,
-    absences,
-    setCitizenshipCalculation,
-    setPrStatusCalculation,
-    setResidencyCalculation,
-    setIsCalculating,
-  ]);
+    void performCalculations();
+  }, [prStartDate, tmpStartDate, absences, dispatch]);
 
-  return null; // This component doesn't render anything
+  return null;
 }

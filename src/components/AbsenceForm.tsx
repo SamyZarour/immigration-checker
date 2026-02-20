@@ -1,66 +1,89 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRecoilState } from "recoil";
-import { absencesAtom } from "../store/atoms";
-import { absenceFormSchema, type AbsenceFormData } from "../schemas/forms";
+import { useState } from "react";
+import { useAppDispatch } from "../store/hooks";
+import { addAbsence } from "../store/immigrationSlice";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 export function AbsenceForm() {
-  const [, setAbsences] = useRecoilState(absencesAtom);
+  const dispatch = useAppDispatch();
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [description, setDescription] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<AbsenceFormData>({
-    resolver: zodResolver(absenceFormSchema),
-  });
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newErrors: Record<string, string> = {};
 
-  const onSubmit = (data: AbsenceFormData) => {
-    const newAbsence = {
-      startDate: data.startDate,
-      endDate: data.endDate,
-      description: data.description || "",
-    };
+    if (!startDate) newErrors.startDate = "Start date is required";
+    if (!endDate) newErrors.endDate = "End date is required";
+    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+      newErrors.endDate = "Start date must be before or equal to end date";
+    }
 
-    setAbsences((prev) => [...prev, newAbsence]);
-    reset();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    dispatch(addAbsence({ startDate, endDate, description }));
+    setStartDate("");
+    setEndDate("");
+    setDescription("");
+    setErrors({});
   };
 
   return (
-    <div className="input-group">
-      <h3>➕ Add Absence</h3>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div>
-          <label htmlFor="absenceStart">Start Date:</label>
-          <input type="date" id="absenceStart" {...register("startDate")} />
-          {errors.startDate && (
-            <span className="error">{errors.startDate.message}</span>
-          )}
-        </div>
+    <Card className="flex-1 min-w-[280px]">
+      <CardHeader>
+        <CardTitle className="text-base">Add Absence</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="absenceStart">Start Date</Label>
+            <Input
+              type="date"
+              id="absenceStart"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+            {errors.startDate && (
+              <p className="text-sm text-destructive">{errors.startDate}</p>
+            )}
+          </div>
 
-        <div>
-          <label htmlFor="absenceEnd">End Date:</label>
-          <input type="date" id="absenceEnd" {...register("endDate")} />
-          {errors.endDate && (
-            <span className="error">{errors.endDate.message}</span>
-          )}
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="absenceEnd">End Date</Label>
+            <Input
+              type="date"
+              id="absenceEnd"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+            {errors.endDate && (
+              <p className="text-sm text-destructive">{errors.endDate}</p>
+            )}
+          </div>
 
-        <div>
-          <label htmlFor="description">Description (optional):</label>
-          <input
-            type="text"
-            id="description"
-            placeholder="e.g., Vacation, Work, Family"
-            {...register("description")}
-          />
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Description (optional)</Label>
+            <Input
+              type="text"
+              id="description"
+              placeholder="e.g., Vacation, Work, Family"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
 
-        <button type="submit" className="btn btn-success">
-          Add Absence
-        </button>
-      </form>
-    </div>
+          <Button type="submit" className="w-full">
+            Add Absence
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

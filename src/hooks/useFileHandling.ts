@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { SavedData } from "../store/atoms";
+import type { SavedData } from "../store/immigrationSlice";
 
 export function useFileHandling() {
   const exportData = useCallback((data: SavedData) => {
@@ -19,7 +19,7 @@ export function useFileHandling() {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
-          const data = JSON.parse(e.target?.result as string);
+          const data = JSON.parse(e.target?.result as string) as SavedData;
           resolve(data);
         } catch {
           reject(new Error("Invalid JSON file"));
