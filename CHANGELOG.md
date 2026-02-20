@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/SamyZarour/immigration-checker/compare/v1.0.2...v1.0.3) (2026-02-20)
+
+
+### Bug Fixes
+
+* validate imported JSON with Zod before dispatching to store ([ca9ea85](https://github.com/SamyZarour/immigration-checker/commit/ca9ea856f78a4e61ddd8eec10ce7897a4d8192e7))
+
 ## [1.0.2](https://github.com/SamyZarour/immigration-checker/compare/v1.0.1...v1.0.2) (2026-02-20)
 
 
