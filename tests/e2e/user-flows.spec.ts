@@ -10,7 +10,7 @@ async function addAbsence(
   await page.locator("#absenceEnd").fill(end);
   await page.locator("#description").fill(description);
   await page.click('button:has-text("Add Absence")');
-  await page.waitForTimeout(300);
+  await expect(page.getByText(description).first()).toBeVisible();
 }
 
 test.describe("Date input and calculation flow", () => {
@@ -89,7 +89,7 @@ test.describe("Absence management flow", () => {
     await page.locator("#prStartDate").fill("2022-01-01");
     await page.locator("#tmpStartDate").fill("2022-01-01");
 
-    await page.waitForTimeout(500);
+    await expect(page.getByText("Calculating...")).toHaveCount(0);
     const prDaysBefore = await page
       .getByText("PR Days Today")
       .first()
@@ -100,7 +100,7 @@ test.describe("Absence management flow", () => {
 
     await addAbsence(page, "2024-06-15", "2024-06-15", "Day trip");
 
-    await page.waitForTimeout(500);
+    await expect(page.getByText("Calculating...")).toHaveCount(0);
     const prDaysAfter = await page
       .getByText("PR Days Today")
       .first()
