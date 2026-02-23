@@ -1,0 +1,21 @@
+name: Setup
+description: Common Node.js + pnpm setup with caching
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+
+    - uses: pnpm/action-setup@v4
+
+    - name: Cache pnpm store
+      uses: actions/cache@v5
+      with:
+        path: ~/.local/share/pnpm/store/v3
+        key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: ${{ runner.os }}-pnpm-
+
+    - run: pnpm install --frozen-lockfile
+      shell: bash
