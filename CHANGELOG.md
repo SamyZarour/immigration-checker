@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/SamyZarour/immigration-checker/compare/v1.1.0...v1.1.1) (2026-02-23)
+
+
+### Bug Fixes
+
+* add skip-to-content link for keyboard navigation ([#22](https://github.com/SamyZarour/immigration-checker/issues/22)) ([89f39fd](https://github.com/SamyZarour/immigration-checker/commit/89f39fdc54ecafd09de560f13a3fac72b9a81247))
+
 # [1.1.0](https://github.com/SamyZarour/immigration-checker/compare/v1.0.5...v1.1.0) (2026-02-23)
 
 
