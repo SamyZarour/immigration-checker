@@ -1130,3 +1130,63 @@ describe("IRCC Compliance", () => {
     expect(result.tempDaysToday).toBeGreaterThan(500);
   });
 });
+
+// ============================================================================
+// Performance Benchmark
+// ============================================================================
+
+describe("Performance", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("calculateCitizenship completes in under 50ms with complex absences", () => {
+    vi.setSystemTime(new Date("2026-02-17"));
+    const absences: Absence[] = [
+      {
+        startDate: "2020-04-10",
+        endDate: "2021-07-01",
+        description: "Covid",
+      },
+      {
+        startDate: "2024-01-12",
+        endDate: "2024-02-11",
+        description: "Trip 1",
+      },
+      {
+        startDate: "2024-04-06",
+        endDate: "2024-04-20",
+        description: "Trip 2",
+      },
+      {
+        startDate: "2024-06-07",
+        endDate: "2024-09-07",
+        description: "Trip 3",
+      },
+      {
+        startDate: "2024-12-25",
+        endDate: "2025-01-22",
+        description: "Trip 4",
+      },
+      {
+        startDate: "2025-04-30",
+        endDate: "2025-07-24",
+        description: "Trip 5",
+      },
+    ];
+
+    const iterations = 100;
+    const start = performance.now();
+    for (let i = 0; i < iterations; i++) {
+      calculateCitizenship("2023-10-30", "2019-12-02", absences);
+    }
+    const elapsed = performance.now() - start;
+    const avgMs = elapsed / iterations;
+
+    expect(avgMs).toBeLessThan(50);
+  });
+});
