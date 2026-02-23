@@ -110,84 +110,116 @@ export function addYearsToDate(date: Date, years: number): Date {
   return new Date(date.getFullYear() + years, date.getMonth(), date.getDate());
 }
 
-// Calculate citizenship eligibility
+interface DayBreakdown {
+  tempDays: number;
+  prDays: number;
+  totalDays: number;
+}
+
+// Compute temp/PR/total days for a specific candidate citizenship date.
+// Extracted from the calculateCitizenship loop body for reuse in binary search.
+function computeDaysForDate(
+  candidateDate: Date,
+  prStart: Date,
+  tmpStart: Date,
+  absences: Absence[]
+): DayBreakdown {
+  const fiveYearsAgo = addYearsToDate(candidateDate, -5);
+  const tmpStartLocal = tmpStart > fiveYearsAgo ? tmpStart : fiveYearsAgo;
+  const prStartLocal = prStart > fiveYearsAgo ? prStart : fiveYearsAgo;
+
+  // BUG 3 fix: temp period ends the day BEFORE PR start
+  const tempDays =
+    tmpStartLocal < prStartLocal
+      ? calculateDaysInCanada(
+          tmpStartLocal,
+          addDays(prStartLocal, -1),
+          absences
+        )
+      : 0;
+
+  // BUG 4 fix: application date itself does not count toward physical presence
+  const prDays = calculateDaysInCanada(
+    prStartLocal,
+    addDays(candidateDate, -1),
+    absences
+  );
+
+  const totalDays = Math.min(Math.floor(tempDays / 2), 365) + prDays;
+
+  return { tempDays, prDays, totalDays };
+}
+
+// Calculate citizenship eligibility using binary search.
+// totalDays is monotonically non-decreasing for future dates (no future
+// absences), so binary search correctly finds the earliest eligible date.
 export function calculateCitizenship(
   prStartDate: string,
   tmpStartDate: string,
   absences: Absence[]
 ): CitizenshipResult {
   const today = new Date();
-  let isCitizenshipDateFound = false;
-  let citizenshipDate = new Date(today);
+  const prStart = parseDate(prStartDate);
+  const tmpStart = parseDate(tmpStartDate);
 
-  let tempDaysToday = 0;
-  let prDaysToday = 0;
-  let totalDaysToday = 0;
+  const todayResult = computeDaysForDate(today, prStart, tmpStart, absences);
 
-  let tempDays = 0;
-  let prDays = 0;
-  let totalDays = 0;
+  if (todayResult.totalDays >= 1095) {
+    return {
+      ...todayResult,
+      totalDaysToday: todayResult.totalDays,
+      tempDaysToday: todayResult.tempDays,
+      prDaysToday: todayResult.prDays,
+      remainingDays: 0,
+      progress: Math.min(100, (todayResult.totalDays / 1095) * 100),
+      citizenshipDate: today,
+      eligible: true,
+    };
+  }
 
-  while (!isCitizenshipDateFound) {
-    const fiveYearsAgo = addYearsToDate(citizenshipDate, -5);
-    const tmpStartDateLocal =
-      parseDate(tmpStartDate) > fiveYearsAgo
-        ? parseDate(tmpStartDate)
-        : fiveYearsAgo;
-    const prStartDateLocal =
-      parseDate(prStartDate) > fiveYearsAgo
-        ? parseDate(prStartDate)
-        : fiveYearsAgo;
+  // Binary search for the earliest date where totalDays >= 1095.
+  // lo/hi are day offsets from today.
+  let lo = 1;
+  let hi = 3650;
 
-    // BUG 3 fix: temp period ends the day BEFORE PR start (PR start date
-    // belongs to the PR period, not the temp period)
-    tempDays =
-      tmpStartDateLocal < prStartDateLocal
-        ? calculateDaysInCanada(
-            tmpStartDateLocal,
-            addDays(prStartDateLocal, -1),
-            absences
-          )
-        : 0;
+  while (
+    computeDaysForDate(addDays(today, hi), prStart, tmpStart, absences)
+      .totalDays < 1095
+  ) {
+    hi *= 2;
+  }
 
-    // BUG 4 fix: per IRCC, the application date itself does not count toward
-    // physical presence, so the PR period ends the day before citizenshipDate
-    prDays = calculateDaysInCanada(
-      prStartDateLocal,
-      addDays(citizenshipDate, -1),
+  while (lo < hi) {
+    const mid = lo + Math.floor((hi - lo) / 2);
+    const midResult = computeDaysForDate(
+      addDays(today, mid),
+      prStart,
+      tmpStart,
       absences
     );
-
-    totalDays = Math.min(Math.floor(tempDays / 2), 365) + prDays;
-    const isToday =
-      citizenshipDate.toISOString().split("T")[0] ===
-      today.toISOString().split("T")[0];
-    if (isToday) {
-      tempDaysToday = tempDays;
-      prDaysToday = prDays;
-      totalDaysToday = totalDays;
-    }
-
-    if (totalDays >= 1095) {
-      isCitizenshipDateFound = true;
+    if (midResult.totalDays >= 1095) {
+      hi = mid;
     } else {
-      citizenshipDate = addDays(citizenshipDate, 1);
+      lo = mid + 1;
     }
   }
 
-  // BUG 5 fix: use differenceInDays so remainingDays is 0 when eligible today,
-  // and use date-string comparison for eligible so it's not timing-dependent
+  const citizenshipDate = addDays(today, lo);
+  const result = computeDaysForDate(
+    citizenshipDate,
+    prStart,
+    tmpStart,
+    absences
+  );
   const daysUntilEligible = differenceInDays(citizenshipDate, today);
 
   return {
-    totalDays,
-    tempDays,
-    prDays,
-    totalDaysToday,
-    tempDaysToday,
-    prDaysToday,
+    ...result,
+    totalDaysToday: todayResult.totalDays,
+    tempDaysToday: todayResult.tempDays,
+    prDaysToday: todayResult.prDays,
     remainingDays: Math.max(0, daysUntilEligible),
-    progress: Math.min(100, (totalDaysToday / 1095) * 100),
+    progress: Math.min(100, (todayResult.totalDays / 1095) * 100),
     citizenshipDate,
     eligible: daysUntilEligible <= 0,
   };
@@ -199,10 +231,9 @@ export function calculatePRStatus(
   citizenshipDate: Date,
   absences: Absence[]
 ): PRStatusResult {
-  // Date when I can start losing my PR status
-  const fiveYearsAfterPR = addYearsToDate(parseDate(prStartDate), 5);
+  const prStart = parseDate(prStartDate);
+  const fiveYearsAfterPR = addYearsToDate(prStart, 5);
 
-  // If I have not yet reached the 5 years since PR, I am safe
   if (citizenshipDate < fiveYearsAfterPR) {
     return {
       status: "safe",
@@ -210,13 +241,11 @@ export function calculatePRStatus(
     };
   }
 
-  // Calculate days in Canada between the 5 years after PR and the citizenship date
-  const daysBetweenDeadlineAndCitizenship = daysBetween(
-    new Date(fiveYearsAfterPR),
-    citizenshipDate
-  );
-  for (let i = 0; i < daysBetweenDeadlineAndCitizenship; i++) {
-    const date = addDays(parseDate(prStartDate), i);
+  // Check each rolling 5-year window for < 730 days of presence.
+  // Not monotonic, so linear scan is required.
+  const dayCount = daysBetween(new Date(fiveYearsAfterPR), citizenshipDate);
+  for (let i = 0; i < dayCount; i++) {
+    const date = addDays(prStart, i);
     const dateInFiveYears = addYearsToDate(date, 5);
     const daysInCanada = calculateDaysInCanada(date, dateInFiveYears, absences);
     if (daysInCanada < 730) {
