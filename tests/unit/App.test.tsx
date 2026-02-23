@@ -60,4 +60,12 @@ describe("App", () => {
     render(<App />);
     expect(screen.getByText("Recorded Absences")).toBeInTheDocument();
   });
+
+  it("has a skip-to-content link targeting main", () => {
+    render(<App />);
+    const skipLink = screen.getByText("Skip to content");
+    expect(skipLink).toBeInTheDocument();
+    expect(skipLink).toHaveAttribute("href", "#main-content");
+    expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
+  });
 });
