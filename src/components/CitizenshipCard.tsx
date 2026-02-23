@@ -1,8 +1,8 @@
 import { useAppSelector } from "../store/hooks";
+import { selectCitizenshipCalculation } from "../store/selectors";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
 
 function StatBlock({ stats }: { stats: { number: number; label: string }[] }) {
   return (
@@ -18,68 +18,27 @@ function StatBlock({ stats }: { stats: { number: number; label: string }[] }) {
 }
 
 export function CitizenshipCard() {
-  const citizenship = useAppSelector(
-    (s) => s.immigration.citizenshipCalculation
-  );
-  const isCalculating = useAppSelector((s) => s.immigration.isCalculating);
+  const citizenship = useAppSelector(selectCitizenshipCalculation);
 
   const getStatusVariant = () => {
-    if (!citizenship) return "secondary";
     if (citizenship.progress >= 100) return "default" as const;
     if (citizenship.progress >= 80) return "outline" as const;
     return "destructive" as const;
   };
 
   const getStatusLabel = () => {
-    if (!citizenship) return "Pending";
     if (citizenship.progress >= 100) return "Complete";
     if (citizenship.progress >= 80) return "Almost there";
     return "In progress";
   };
 
   const getProgressColor = () => {
-    if (!citizenship) return "";
     if (citizenship.progress >= 100)
       return "[&>[data-slot=progress-indicator]]:bg-emerald-500";
     if (citizenship.progress >= 80)
       return "[&>[data-slot=progress-indicator]]:bg-amber-500";
     return "[&>[data-slot=progress-indicator]]:bg-red-500";
   };
-
-  if (isCalculating) {
-    return (
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Citizenship Eligibility</CardTitle>
-            <Badge variant="secondary">Calculating</Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="mr-2 size-5 animate-spin text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Calculating...</span>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!citizenship) {
-    return (
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Citizenship Eligibility</CardTitle>
-            <Badge variant="secondary">Pending</Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Enter your dates to see results
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   const statsRemaining = [
     { number: citizenship.remainingDays, label: "Days Remaining" },
@@ -128,8 +87,7 @@ export function CitizenshipCard() {
           </div>
         ) : citizenship.citizenshipDate ? (
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300">
-            Estimated date:{" "}
-            {new Date(citizenship.citizenshipDate).toLocaleDateString()}
+            Estimated date: {citizenship.citizenshipDate.toLocaleDateString()}
           </div>
         ) : null}
       </CardContent>

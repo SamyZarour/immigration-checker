@@ -9,7 +9,6 @@ import { CitizenshipCard } from "./components/CitizenshipCard";
 import { PRStatusCard } from "./components/PRStatusCard";
 import { ResidencyCard } from "./components/ResidencyCard";
 import { AbsencesList } from "./components/AbsencesList";
-import { CalculationEngine } from "./components/CalculationEngine";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { ErrorFallback } from "./components/ErrorFallback";
 import { Separator } from "@/components/ui/separator";
@@ -51,8 +50,6 @@ function AppContent() {
 
         <AbsencesList />
       </main>
-
-      <CalculationEngine />
     </div>
   );
 }

@@ -6,11 +6,6 @@ import immigrationReducer, {
   addAbsence,
   removeAbsence,
   setAbsences,
-  setCitizenshipCalculation,
-  setPrStatusCalculation,
-  setResidencyCalculation,
-  setIsCalculating,
-  setIsDataLoading,
   loadSavedData,
 } from "../../src/store/immigrationSlice";
 
@@ -28,11 +23,6 @@ describe("immigrationSlice", () => {
     expect(state.prStartDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(state.tmpStartDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(state.absences).toEqual([]);
-    expect(state.citizenshipCalculation).toBeNull();
-    expect(state.prStatusCalculation).toBeNull();
-    expect(state.residencyCalculation).toBeNull();
-    expect(state.isCalculating).toBe(false);
-    expect(state.isDataLoading).toBe(false);
   });
 
   describe("date actions", () => {
@@ -185,65 +175,6 @@ describe("immigrationSlice", () => {
     });
   });
 
-  describe("calculation actions", () => {
-    it("setCitizenshipCalculation stores result", () => {
-      const store = createTestStore();
-      const calc = {
-        totalDays: 1095,
-        tempDays: 365,
-        prDays: 730,
-        totalDaysToday: 900,
-        tempDaysToday: 300,
-        prDaysToday: 600,
-        remainingDays: 195,
-        progress: 82.2,
-        citizenshipDate: "2026-06-01",
-        eligible: false,
-      };
-
-      store.dispatch(setCitizenshipCalculation(calc));
-      expect(store.getState().immigration.citizenshipCalculation).toEqual(calc);
-    });
-
-    it("setPrStatusCalculation stores result", () => {
-      const store = createTestStore();
-      store.dispatch(
-        setPrStatusCalculation({ status: "safe", lossDate: null })
-      );
-      expect(store.getState().immigration.prStatusCalculation).toEqual({
-        status: "safe",
-        lossDate: null,
-      });
-    });
-
-    it("setResidencyCalculation stores result", () => {
-      const store = createTestStore();
-      store.dispatch(
-        setResidencyCalculation({ status: "danger", lossDate: 2025 })
-      );
-      expect(store.getState().immigration.residencyCalculation).toEqual({
-        status: "danger",
-        lossDate: 2025,
-      });
-    });
-  });
-
-  describe("loading state actions", () => {
-    it("setIsCalculating toggles calculating flag", () => {
-      const store = createTestStore();
-      store.dispatch(setIsCalculating(true));
-      expect(store.getState().immigration.isCalculating).toBe(true);
-      store.dispatch(setIsCalculating(false));
-      expect(store.getState().immigration.isCalculating).toBe(false);
-    });
-
-    it("setIsDataLoading toggles data loading flag", () => {
-      const store = createTestStore();
-      store.dispatch(setIsDataLoading(true));
-      expect(store.getState().immigration.isDataLoading).toBe(true);
-    });
-  });
-
   describe("loadSavedData", () => {
     it("replaces dates and absences in one action", () => {
       const store = createTestStore();
@@ -270,21 +201,6 @@ describe("immigrationSlice", () => {
       expect(state.tmpStartDate).toBe("2019-12-02");
       expect(state.absences).toHaveLength(1);
       expect(state.absences[0].description).toBe("Imported");
-    });
-
-    it("does not affect calculation state", () => {
-      const store = createTestStore();
-      store.dispatch(setIsCalculating(true));
-
-      store.dispatch(
-        loadSavedData({
-          prStartDate: "2023-01-01",
-          tmpStartDate: "2020-01-01",
-          absences: [],
-        })
-      );
-
-      expect(store.getState().immigration.isCalculating).toBe(true);
     });
   });
 });
