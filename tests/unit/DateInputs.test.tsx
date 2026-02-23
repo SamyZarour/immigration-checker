@@ -66,4 +66,19 @@ describe("DateInputs", () => {
 
     expect(store.getState().immigration.tmpStartDate).toBe("2019-12-02");
   });
+
+  it("dispatches both dates on form submission via Enter", async () => {
+    const { store, user } = renderWithStore();
+
+    const prInput = screen.getByLabelText("PR Start Date");
+    await user.clear(prInput);
+    await user.type(prInput, "2023-05-01");
+
+    const tmpInput = screen.getByLabelText("Temporary Status Start Date");
+    await user.clear(tmpInput);
+    await user.type(tmpInput, "2021-03-15{enter}");
+
+    expect(store.getState().immigration.prStartDate).toBe("2023-05-01");
+    expect(store.getState().immigration.tmpStartDate).toBe("2021-03-15");
+  });
 });
