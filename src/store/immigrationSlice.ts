@@ -12,7 +12,7 @@ export interface SavedData {
   absences: Absence[];
 }
 
-interface ImmigrationState {
+export interface ImmigrationState {
   prStartDate: string;
   tmpStartDate: string;
   absences: Absence[];

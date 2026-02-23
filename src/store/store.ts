@@ -1,14 +1,26 @@
 import { configureStore } from "@reduxjs/toolkit";
-import immigrationReducer from "./immigrationSlice";
+import immigrationReducer, { type ImmigrationState } from "./immigrationSlice";
 
 export const STORAGE_KEY = "immigration-checker-state";
 
-export function loadPersistedState(): { immigration?: unknown } | undefined {
+function isImmigrationState(value: unknown): value is ImmigrationState {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const obj = value as Record<string, unknown>;
+  return (
+    typeof obj.prStartDate === "string" &&
+    typeof obj.tmpStartDate === "string" &&
+    Array.isArray(obj.absences)
+  );
+}
+
+export function loadPersistedState():
+  | { immigration: ImmigrationState }
+  | undefined {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return undefined;
     const parsed: unknown = JSON.parse(raw);
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+    if (isImmigrationState(parsed)) {
       return { immigration: parsed };
     }
   } catch {
