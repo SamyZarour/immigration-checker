@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/SamyZarour/immigration-checker/compare/v1.0.5...v1.1.0) (2026-02-23)
+
+
+### Features
+
+* auto-save state to localStorage ([#20](https://github.com/SamyZarour/immigration-checker/issues/20)) ([13e245e](https://github.com/SamyZarour/immigration-checker/commit/13e245e06c0027915be1a4ad9d13e9e8512b6cda))
+
 ## [1.0.5](https://github.com/SamyZarour/immigration-checker/compare/v1.0.4...v1.0.5) (2026-02-23)
 
 
