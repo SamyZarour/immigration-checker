@@ -1,3 +1,10 @@
+## [1.0.4](https://github.com/SamyZarour/immigration-checker/compare/v1.0.3...v1.0.4) (2026-02-23)
+
+
+### Performance Improvements
+
+* code-split vendor chunks and remove unused tw-animate-css ([#18](https://github.com/SamyZarour/immigration-checker/issues/18)) ([936bc62](https://github.com/SamyZarour/immigration-checker/commit/936bc62abdec6d16a90fdb099cda863d178a5afe))
+
 ## [1.0.3](https://github.com/SamyZarour/immigration-checker/compare/v1.0.2...v1.0.3) (2026-02-20)
 
 
