@@ -1,3 +1,10 @@
+## [1.0.5](https://github.com/SamyZarour/immigration-checker/compare/v1.0.4...v1.0.5) (2026-02-23)
+
+
+### Performance Improvements
+
+* optimize calculateCitizenship with binary search ([#19](https://github.com/SamyZarour/immigration-checker/issues/19)) ([f14c6f3](https://github.com/SamyZarour/immigration-checker/commit/f14c6f321d281e71eec906f87e4fdcab98a6a349))
+
 ## [1.0.4](https://github.com/SamyZarour/immigration-checker/compare/v1.0.3...v1.0.4) (2026-02-23)
 
 
