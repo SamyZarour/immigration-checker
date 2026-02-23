@@ -16,6 +16,12 @@ import { Separator } from "@/components/ui/separator";
 function AppContent() {
   return (
     <div className="min-h-screen bg-background">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:shadow-lg"
+      >
+        Skip to content
+      </a>
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex max-w-6xl items-start justify-between px-4 py-6 sm:px-6 lg:px-8">
           <div>
@@ -31,7 +37,10 @@ function AppContent() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <main
+        id="main-content"
+        className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8"
+      >
         <div className="grid gap-6 lg:grid-cols-3">
           <CitizenshipCard />
           <PRStatusCard />
