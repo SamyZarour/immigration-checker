@@ -1,12 +1,19 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import immigrationReducer, {
-  setResidencyCalculation,
-  setIsCalculating,
+  setPrStartDate,
+  setTmpStartDate,
 } from "../../src/store/immigrationSlice";
 import { ResidencyCard } from "../../src/components/ResidencyCard";
+
+vi.mock("../../src/store/selectors", async () => {
+  const actual = await vi.importActual("../../src/store/selectors");
+  return { ...actual };
+});
+
+import * as selectors from "../../src/store/selectors";
 
 function createTestStore() {
   return configureStore({
@@ -25,44 +32,41 @@ function renderWithStore(store = createTestStore()) {
   };
 }
 
+beforeEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe("ResidencyCard", () => {
-  it("renders loading state when calculating", () => {
+  it("renders with real selector from store inputs", () => {
     const store = createTestStore();
-    store.dispatch(setIsCalculating(true));
+    store.dispatch(setPrStartDate("2022-01-01"));
+    store.dispatch(setTmpStartDate("2020-01-01"));
     renderWithStore(store);
 
-    expect(screen.getByText("Calculating...")).toBeInTheDocument();
-    expect(screen.getByText("Calculating")).toBeInTheDocument();
-  });
-
-  it("renders pending state when no calculation exists", () => {
-    renderWithStore();
-
-    expect(screen.getByText("Pending")).toBeInTheDocument();
-    expect(
-      screen.getByText("Enter your dates to see results")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Residency Obligation")).toBeInTheDocument();
   });
 
   it("renders 'Maintained' badge when status is safe", () => {
-    const store = createTestStore();
-    store.dispatch(setResidencyCalculation({ status: "safe", lossDate: null }));
-    renderWithStore(store);
+    vi.spyOn(selectors, "selectResidencyCalculation").mockReturnValue({
+      status: "safe",
+      lossDate: null,
+    });
+    renderWithStore();
 
     expect(screen.getByText("Maintained")).toBeInTheDocument();
     expect(screen.getByText("Residency status maintained")).toBeInTheDocument();
   });
 
   it("renders 'At Risk' badge with deadline when status is danger", () => {
-    const store = createTestStore();
-    store.dispatch(
-      setResidencyCalculation({ status: "danger", lossDate: 180 })
-    );
-    renderWithStore(store);
+    vi.spyOn(selectors, "selectResidencyCalculation").mockReturnValue({
+      status: "danger",
+      lossDate: 2025,
+    });
+    renderWithStore();
 
     expect(screen.getByText("At Risk")).toBeInTheDocument();
     expect(
-      screen.getByText(/Residency status in danger — deadline is 180/)
+      screen.getByText(/Residency status in danger — deadline is 2025/)
     ).toBeInTheDocument();
   });
 });

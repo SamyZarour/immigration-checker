@@ -1,11 +1,7 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import {
-  loadSavedData,
-  setIsDataLoading,
-  type SavedData,
-} from "../store/immigrationSlice";
+import { loadSavedData, type SavedData } from "../store/immigrationSlice";
 import { useFileHandling } from "../hooks/useFileHandling";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,12 +12,12 @@ export function DataManager() {
   const prStartDate = useAppSelector((s) => s.immigration.prStartDate);
   const tmpStartDate = useAppSelector((s) => s.immigration.tmpStartDate);
   const absences = useAppSelector((s) => s.immigration.absences);
-  const isDataLoading = useAppSelector((s) => s.immigration.isDataLoading);
+  const [isDataLoading, setIsDataLoading] = useState(false);
   const { exportData, importData } = useFileHandling();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = () => {
-    dispatch(setIsDataLoading(true));
+    setIsDataLoading(true);
     try {
       const data: SavedData = { prStartDate, tmpStartDate, absences };
       exportData(data);
@@ -30,14 +26,14 @@ export function DataManager() {
         error instanceof Error ? error.message : "Unknown error";
       toast.error(`Failed to export data: ${errorMessage}`);
     } finally {
-      dispatch(setIsDataLoading(false));
+      setIsDataLoading(false);
     }
   };
 
   const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      dispatch(setIsDataLoading(true));
+      setIsDataLoading(true);
       importData(file)
         .then((data) => {
           dispatch(loadSavedData(data));
@@ -48,7 +44,7 @@ export function DataManager() {
           toast.error(`Failed to import data: ${errorMessage}`);
         })
         .finally(() => {
-          dispatch(setIsDataLoading(false));
+          setIsDataLoading(false);
         });
     }
   };

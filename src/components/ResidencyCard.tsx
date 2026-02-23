@@ -1,47 +1,10 @@
 import { useAppSelector } from "../store/hooks";
+import { selectResidencyCalculation } from "../store/selectors";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
 
 export function ResidencyCard() {
-  const residency = useAppSelector((s) => s.immigration.residencyCalculation);
-  const isCalculating = useAppSelector((s) => s.immigration.isCalculating);
-
-  if (isCalculating) {
-    return (
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Residency Obligation</CardTitle>
-            <Badge variant="secondary">Calculating</Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="mr-2 size-5 animate-spin text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Calculating...</span>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!residency) {
-    return (
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Residency Obligation</CardTitle>
-            <Badge variant="secondary">Pending</Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Enter your dates to see results
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
+  const residency = useAppSelector(selectResidencyCalculation);
   const isSafe = residency.status === "safe";
 
   return (

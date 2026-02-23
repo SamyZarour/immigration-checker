@@ -1,13 +1,21 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import immigrationReducer, {
-  setCitizenshipCalculation,
-  setIsCalculating,
-  type CitizenshipCalculation,
+  setPrStartDate,
+  setTmpStartDate,
+  addAbsence,
 } from "../../src/store/immigrationSlice";
 import { CitizenshipCard } from "../../src/components/CitizenshipCard";
+import type { CitizenshipResult } from "../../src/utils/calculations";
+
+vi.mock("../../src/store/selectors", async () => {
+  const actual = await vi.importActual("../../src/store/selectors");
+  return { ...actual };
+});
+
+import * as selectors from "../../src/store/selectors";
 
 function createTestStore() {
   return configureStore({
@@ -26,7 +34,7 @@ function renderWithStore(store = createTestStore()) {
   };
 }
 
-const baseCalc: CitizenshipCalculation = {
+const baseCalc: CitizenshipResult = {
   totalDays: 1000,
   tempDays: 200,
   prDays: 800,
@@ -35,40 +43,37 @@ const baseCalc: CitizenshipCalculation = {
   prDaysToday: 720,
   remainingDays: 95,
   progress: 90,
-  citizenshipDate: null,
+  citizenshipDate: new Date("2027-06-15"),
   eligible: false,
 };
 
+beforeEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe("CitizenshipCard", () => {
-  it("renders loading state when calculating", () => {
+  it("renders with real selector from store inputs", () => {
     const store = createTestStore();
-    store.dispatch(setIsCalculating(true));
+    store.dispatch(setPrStartDate("2022-01-01"));
+    store.dispatch(setTmpStartDate("2020-01-01"));
     renderWithStore(store);
 
-    expect(screen.getByText("Calculating...")).toBeInTheDocument();
-    expect(screen.getByText("Calculating")).toBeInTheDocument();
-  });
-
-  it("renders pending state when no calculation exists", () => {
-    renderWithStore();
-
-    expect(screen.getByText("Pending")).toBeInTheDocument();
+    expect(screen.getByText("Citizenship Eligibility")).toBeInTheDocument();
     expect(
-      screen.getByText("Enter your dates to see results")
+      screen.getByRole("progressbar", {
+        name: "Citizenship eligibility progress",
+      })
     ).toBeInTheDocument();
   });
 
   it("renders 'Complete' badge and eligible message at 100% progress", () => {
-    const store = createTestStore();
-    store.dispatch(
-      setCitizenshipCalculation({
-        ...baseCalc,
-        progress: 100,
-        remainingDays: 0,
-        eligible: true,
-      })
-    );
-    renderWithStore(store);
+    vi.spyOn(selectors, "selectCitizenshipCalculation").mockReturnValue({
+      ...baseCalc,
+      progress: 100,
+      remainingDays: 0,
+      eligible: true,
+    });
+    renderWithStore();
 
     expect(screen.getByText("Complete")).toBeInTheDocument();
     expect(screen.getByText("100%")).toBeInTheDocument();
@@ -76,42 +81,44 @@ describe("CitizenshipCard", () => {
   });
 
   it("renders 'Almost there' badge at 80-99% progress", () => {
-    const store = createTestStore();
-    store.dispatch(setCitizenshipCalculation({ ...baseCalc, progress: 85 }));
-    renderWithStore(store);
+    vi.spyOn(selectors, "selectCitizenshipCalculation").mockReturnValue({
+      ...baseCalc,
+      progress: 85,
+    });
+    renderWithStore();
 
     expect(screen.getByText("Almost there")).toBeInTheDocument();
     expect(screen.getByText("85%")).toBeInTheDocument();
   });
 
   it("renders 'In progress' badge below 80%", () => {
-    const store = createTestStore();
-    store.dispatch(setCitizenshipCalculation({ ...baseCalc, progress: 50 }));
-    renderWithStore(store);
+    vi.spyOn(selectors, "selectCitizenshipCalculation").mockReturnValue({
+      ...baseCalc,
+      progress: 50,
+    });
+    renderWithStore();
 
     expect(screen.getByText("In progress")).toBeInTheDocument();
     expect(screen.getByText("50%")).toBeInTheDocument();
   });
 
   it("displays estimated citizenship date when not yet eligible", () => {
-    const store = createTestStore();
-    store.dispatch(
-      setCitizenshipCalculation({
-        ...baseCalc,
-        progress: 70,
-        citizenshipDate: "2027-06-15",
-        eligible: false,
-      })
-    );
-    renderWithStore(store);
+    vi.spyOn(selectors, "selectCitizenshipCalculation").mockReturnValue({
+      ...baseCalc,
+      progress: 70,
+      citizenshipDate: new Date("2027-06-15"),
+      eligible: false,
+    });
+    renderWithStore();
 
     expect(screen.getByText(/Estimated date:/)).toBeInTheDocument();
   });
 
   it("displays stat blocks with correct values", () => {
-    const store = createTestStore();
-    store.dispatch(setCitizenshipCalculation(baseCalc));
-    renderWithStore(store);
+    vi.spyOn(selectors, "selectCitizenshipCalculation").mockReturnValue(
+      baseCalc
+    );
+    renderWithStore();
 
     expect(screen.getByText("Total Days")).toBeInTheDocument();
     expect(screen.getByText("1000")).toBeInTheDocument();
@@ -123,15 +130,19 @@ describe("CitizenshipCard", () => {
     expect(screen.getByText("95")).toBeInTheDocument();
   });
 
-  it("renders progress bar with correct aria label", () => {
+  it("accounts for absences in computed result", () => {
     const store = createTestStore();
-    store.dispatch(setCitizenshipCalculation(baseCalc));
+    store.dispatch(setPrStartDate("2022-01-01"));
+    store.dispatch(setTmpStartDate("2020-01-01"));
+    store.dispatch(
+      addAbsence({
+        startDate: "2023-06-01",
+        endDate: "2023-12-31",
+        description: "Away",
+      })
+    );
     renderWithStore(store);
 
-    expect(
-      screen.getByRole("progressbar", {
-        name: "Citizenship eligibility progress",
-      })
-    ).toBeInTheDocument();
+    expect(screen.getByText("Citizenship Eligibility")).toBeInTheDocument();
   });
 });
