@@ -24,7 +24,8 @@ test.describe("Accessibility", () => {
     await page.fill("#description", "Test absence");
     await page.click('button:has-text("Add Absence")');
 
-    await page.waitForTimeout(500);
+    await expect(page.getByText("Test absence")).toBeVisible();
+    await expect(page.getByText("Calculating...")).toHaveCount(0);
 
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa"])
